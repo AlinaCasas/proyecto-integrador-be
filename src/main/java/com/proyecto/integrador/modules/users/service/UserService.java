@@ -1,80 +1,62 @@
 package com.proyecto.integrador.modules.users.service;
 
-import com.proyecto.integrador.modules.common.Mapper;
-import com.proyecto.integrador.modules.users.dto.UserDto;
+import com.proyecto.integrador.common.BadRequestException;
+import com.proyecto.integrador.modules.users.dto.UpdateUserDTO;
+import com.proyecto.integrador.modules.users.dto.UserDTO;
 import com.proyecto.integrador.modules.users.entity.User;
 import com.proyecto.integrador.modules.users.repository.UserRepository;
+import com.proyecto.integrador.modules.users.enums.Roles;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class UserService {
-    private final UserRepository userRepository;
-
-    private Mapper mapper;
 
     @Autowired
-    public UserService(UserRepository userRepository, Mapper mapper) {
-        this.userRepository = userRepository;
-        this.mapper = mapper;
+    private UserRepository userRepository;
+
+    public List<UserDTO> findUsers(){
+        return userRepository.findAllUsers();
     }
 
-
-    public List<User> getUsers(){
-        return userRepository.findAll();
+    public UserDTO createUser(User user) {
+        user.setRoles(List.of(Roles.USER));
+        try {
+            User saveUser = userRepository.save(user);
+            return new UserDTO(saveUser.getId(), saveUser.getFirstName(), saveUser.getLastName(), saveUser.getEmail(), saveUser.getRoles());
+        } catch (Exception e) {
+            throw new BadRequestException("The email is already in use");
+        }
     }
 
-    // Find user by id or email
-//    public Optional<User> getUser(Long id, String email){
-//        if(id != null){
-//            return userRepository.findById(id);
-//        }else if(email != null){
-//            return Optional.ofNullable(userRepository.findByEmail(email));
-//        }else{
-//            return null;
-//        }
-//    }
+    public UserDTO updateUser(String id, UpdateUserDTO updateUserDTO) {
+        String firstName = updateUserDTO.getFirstName();
+        String lastName = updateUserDTO.getLastName();
+        String email = updateUserDTO.getEmail();
+        String password = updateUserDTO.getPassword();
 
-    public Optional<User> getUserById(String id){
-        return userRepository.findById(id);
-    }
-    public User createUser(User user){
-        User user2 = userRepository.save(user);
-        System.out.println(user2);
+        if (firstName == null && lastName == null && email == null && password == null) throw new BadRequestException("No data to update");
 
-        return user2;
-    }
+        User user = userRepository.findById(id).orElseThrow(() -> new BadRequestException("User not found"));
 
-    public User updateUser(String id, UserDto userDto){
-        Optional<User> findUser = userRepository.findById(id);
+        if (user.getDeletedAt() != null) throw new BadRequestException("The user is deleted, please contact support.");
 
-        if(findUser.isEmpty()) {
-            return null;
-        }
+        if (firstName != null) user.setFirstName(updateUserDTO.getFirstName());
+        if (lastName != null) user.setLastName(updateUserDTO.getLastName());
+        if (email != null) user.setEmail(updateUserDTO.getEmail());
+        if (password != null) user.setPassword(updateUserDTO.getPassword());
 
-        userDto.setUserId(id);
-        if (userDto.getFirstName() == null) {
-            userDto.setFirstName(findUser.get().getFirstName());
-        }
-        if (userDto.getLastName() == null) {
-            userDto.setLastName(findUser.get().getLastName());
-        }
-        if (userDto.getEmail() == null) {
-            userDto.setEmail(findUser.get().getEmail());
-        }
-        if (userDto.getPassword() == null) {
-            userDto.setPassword(findUser.get().getPassword());
-        }
-        User user = mapper.userDtoToUser(userDto);
         User saveUser = userRepository.save(user);
-        return saveUser;
-
+        return new UserDTO(saveUser.getId(), saveUser.getFirstName(), saveUser.getLastName(), saveUser.getEmail(), saveUser.getRoles());
     }
 
     public void deleteUser(String id){
-        userRepository.deleteById(id);
+        User user = userRepository.findById(id).orElseThrow(() -> new BadRequestException("User not found"));
+        Date deletedAt = new Date();
+        user.setDeletedAt(deletedAt);
+        userRepository.save(user);
     }
 }
