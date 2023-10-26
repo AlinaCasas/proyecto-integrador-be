@@ -23,7 +23,7 @@ public class ProductService {
             Product saveProduct = productRepository.save(product);
             return new ProductDTO(saveProduct.getId(), saveProduct.getName(), saveProduct.getCategory(), saveProduct.getBrand(), saveProduct.getModel(), saveProduct.getDescription(), saveProduct.getPrice(), saveProduct.getImages(), saveProduct.getDiscount());
         } catch (Exception e) {
-            throw new BadRequestException("The email is already in use");
+            throw new BadRequestException("The product already exists, use another name");
         }
     }
 

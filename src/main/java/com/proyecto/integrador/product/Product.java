@@ -24,7 +24,7 @@ public class Product extends Auditable {
   @GeneratedValue
   private Long id;
 
-  @Column(nullable = false)
+  @Column(nullable = false, unique = true)
   @NotEmpty(message = "Instrument name is required, foe example: Guitar")
   @Size(min = 3, max = 50, message = "Instrument name should be between 3 and 50 characters")
   private String name;
