@@ -26,9 +26,14 @@ public class User extends Auditable implements UserDetails {
   @Id
   @GeneratedValue
   private Integer id;
+
   private String firstname;
+
   private String lastname;
+
+  @Column(unique = true)
   private String email;
+
   private String password;
 
   @Enumerated(EnumType.STRING)

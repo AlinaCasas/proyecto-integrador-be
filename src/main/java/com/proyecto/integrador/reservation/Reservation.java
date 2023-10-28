@@ -15,9 +15,9 @@ import java.util.Date;
 @Table(name = "reservations")
 public class Reservation extends Auditable {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column()
-    private String id;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "userId", nullable = false, referencedColumnName = "id")
@@ -28,7 +28,10 @@ public class Reservation extends Auditable {
     private Product product;
 
     @Column(nullable = false)
-    private Float price;
+    private Float productPrice;
+
+    @Column(nullable = false)
+    private Float totalPrice;
 
     @Column(nullable = false)
     private Date startDate;
