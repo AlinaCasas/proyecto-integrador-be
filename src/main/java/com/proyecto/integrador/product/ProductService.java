@@ -20,6 +20,7 @@ public class ProductService {
 
     public ProductDTO createProduct(Product product) {
         try {
+            if (product.getDiscount() == null) product.setDiscount(0);
             Product saveProduct = productRepository.save(product);
             return new ProductDTO(saveProduct.getId(), saveProduct.getName(), saveProduct.getCategory(), saveProduct.getBrand(), saveProduct.getModel(), saveProduct.getDescription(), saveProduct.getPrice(), saveProduct.getImages(), saveProduct.getDiscount());
         } catch (Exception e) {

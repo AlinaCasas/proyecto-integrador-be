@@ -1,14 +1,17 @@
 package com.proyecto.integrador.reservation;
 
+import com.proyecto.integrador.common.Response;
 import com.proyecto.integrador.reservation.Reservation;
 import com.proyecto.integrador.reservation.ReservationDTO;
 import com.proyecto.integrador.reservation.ReservationService;
 import com.proyecto.integrador.reservation.UpdateReservationDTO;
+import com.proyecto.integrador.user.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,16 +32,15 @@ public class ReservationController {
     }
 
     @PostMapping
-    public ResponseEntity<ReservationResponse> create(@RequestBody(required = false) @Valid ReservationDTO reservation, Principal connectedUser) {
-        String username = connectedUser.getName();
-        var test = connectedUser.implies(null);
-        System.out.println("reservation: " + reservation);
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.createReservation(reservation, connectedUser));
+    public ResponseEntity<Response<ReservationResponse>> create(@RequestBody @Valid ReservationDTO reservation, Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.createReservation(reservation, user));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ReservationResponse> update(@PathVariable(value = "id", required = false) Long id, @RequestBody @Valid UpdateReservationDTO reservation, Errors errors) {
-        return ResponseEntity.status(HttpStatus.OK).body(service.updateReservation(id, reservation));
+    public ResponseEntity<Response<ReservationResponse>> update(@PathVariable(value = "id", required = false) Long id, @RequestBody @Valid UpdateReservationDTO reservation, Authentication authentication, Errors errors) {
+        User user = (User) authentication.getPrincipal();
+        return ResponseEntity.status(HttpStatus.OK).body(service.updateReservation(id, reservation, user));
     }
 
     @DeleteMapping("/{id}")

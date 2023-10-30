@@ -4,13 +4,15 @@ import com.proyecto.integrador.auditing.Auditable;
 import com.proyecto.integrador.product.Product;
 import com.proyecto.integrador.user.User;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.Getter;
+import lombok.*;
 
 import java.util.Date;
 
 @Getter
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "reservations")
 public class Reservation extends Auditable {

@@ -8,5 +8,4 @@ import lombok.Data;
 public class ReservationResponse {
     boolean isReserved;
     boolean needConfirmation;
-    String message;
 }

@@ -1,15 +1,14 @@
 package com.proyecto.integrador.reservation;
 
+import com.proyecto.integrador.common.Response;
 import com.proyecto.integrador.exceptions.BadRequestException;
 import com.proyecto.integrador.product.Product;
 import com.proyecto.integrador.product.ProductRepository;
-import com.proyecto.integrador.product.ProductService;
-import com.proyecto.integrador.reservation.Reservation;
+import com.proyecto.integrador.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.security.Principal;
 import java.util.Date;
 import java.util.List;
 
@@ -26,14 +25,54 @@ public class ReservationService {
         return reservationRepository.findAllReservationsBy();
     }
 
-    public ReservationResponse createReservation(ReservationDTO reservation, Principal connectedUser) {
+    public Response<ReservationResponse> createReservation(ReservationDTO reservationDTO, User user) {
+        Long productId = reservationDTO.getProductId();
+        long startDate = reservationDTO.getStartDate() * 1000;
+        long endDate = reservationDTO.getEndDate() * 1000;
+
+        long now = new Date().getTime();
+
+        if (startDate < now) throw new BadRequestException("Start date of reservation is invalid");
+        if (endDate < now || endDate < startDate) throw new BadRequestException("End date of reservation is invalid");
+
+        Product product = productRepository.findById(productId).orElseThrow(() -> new BadRequestException("Product to reserve not found"));
+
+        List<Reservation> reservationList = reservationRepository.findAllActiveReservationsByProductId(productId);
+
+        reservationList.forEach(res -> {
+                long reservationStartDate = res.getStartDate().getTime();
+                long reservationEndDate = res.getEndDate().getTime();
+                if (startDate >= reservationStartDate && startDate <= reservationEndDate) throw new BadRequestException("The product is already reserved in that date");
+                if (endDate >= reservationStartDate && endDate <= reservationEndDate) throw new BadRequestException("The product is already reserved in that date");
+            }
+        );
+
+        float price = product.getPrice();
+        int discount = product.getDiscount();
+        float productPriceWithDiscount = price - ((price * discount) / 100);
+
+        long days = (endDate - startDate) / (1000 * 60 * 60 * 24);
+        float newTotalPrice = (price * days) - ((price * days) * discount / 100);
+
+        Reservation reservation = Reservation.builder()
+                .user(user)
+                .product(product)
+                .startDate(new Date(startDate))
+                .endDate(new Date(endDate))
+                .totalPrice(newTotalPrice)
+                .productPrice(productPriceWithDiscount)
+                .build();
+
+        Reservation saveReservation = reservationRepository.save(reservation);
+
+        ReservationResponse reservationResponse = new ReservationResponse(true, false);
 
         return null;
     }
 
-    public ReservationResponse updateReservation(Long id, UpdateReservationDTO updateReservationDTO) {
+    public Response<ReservationResponse> updateReservation(Long id, UpdateReservationDTO updateReservationDTO, User user) {
 
-        Integer updateUserId = updateReservationDTO.getUserId();
+        Integer updateUserId = null;
         Long updateProductId = updateReservationDTO.getProductId();
         Long updateStartDate = updateReservationDTO.getStartDate();
         Long updateEndDate = updateReservationDTO.getEndDate();
@@ -62,6 +101,8 @@ public class ReservationService {
         if (startDate <= now) throw new BadRequestException("Start date of reservation is invalid");
         if (endDate <= now || endDate <= startDate) throw new BadRequestException("End date of reservation is invalid");
 
+        Product product = productRepository.findById(updateProductId).orElseThrow(() -> new BadRequestException("Product to reserve not found"));
+
         List<Reservation> reservationList = reservationRepository.findAllActiveReservationsByProductId(updateProductId);
         reservationList.forEach(res -> {
                 long reservationStartDate = res.getStartDate().getTime();
@@ -72,7 +113,6 @@ public class ReservationService {
         );
 
         // Calculate new price of reservation, go to product and get price and discount, calculate price with dates and discount
-        Product product = productRepository.findById(updateProductId).orElseThrow(() -> new BadRequestException("Product to reserve not found"));
         float price = product.getPrice();
         int discount = product.getDiscount();
 
@@ -80,7 +120,8 @@ public class ReservationService {
         float productPriceWithDiscount = price - ((price * discount) / 100);
 
         if (!isConfirm && reservation.getProductPrice() != productPriceWithDiscount) {
-            return new ReservationResponse(false, true, "The product price to reserve changed, please confirm the reservation");
+            ReservationResponse reservationResponse = new ReservationResponse(false, true);
+            return new Response<ReservationResponse>(reservationResponse, "The product price to reserve changed, please confirm the reservation", false);
         }
 
         long days = (endDate - startDate) / (1000 * 60 * 60 * 24);
@@ -89,7 +130,8 @@ public class ReservationService {
         reservation.setProductPrice(productPriceWithDiscount);
 
         Reservation saveReservation = reservationRepository.save(reservation);
-        return new ReservationResponse(true, false, "Reservation updated successfully");
+        ReservationResponse reservationResponse = new ReservationResponse(true, false);
+        return new Response<ReservationResponse>(reservationResponse, "Reservation updated successfully", true);
     }
 
     public void deleteReservation(Long id){

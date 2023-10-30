@@ -7,6 +7,7 @@ import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.util.Date;
 import java.util.List;
 
 @Data
@@ -25,12 +26,12 @@ public class ReservationDTO {
     private Long productId;
 
     @NotNull(message = "Start date of reservation is required")
-    @Min(value = 10, message = "Start date of reservation should be a timestamp format")
+    @Min(value = 1672531200, message = "Start date of reservation should be a timestamp format")
     @Positive(message = "Start date of reservation is invalid")
     private Long startDate;
 
     @NotNull(message = "End date of reservation is required")
-    @Min(value = 10, message = "End date of reservation should be a timestamp format")
+    @Min(value = 1672531200, message = "End date of reservation should be a timestamp format")
     @Positive(message = "Start date of reservation is invalid")
     private Long endDate;
 }

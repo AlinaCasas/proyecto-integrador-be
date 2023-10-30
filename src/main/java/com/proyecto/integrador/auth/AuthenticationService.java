@@ -90,8 +90,8 @@ public class AuthenticationService {
             request.getPassword()
         )
     );
-    User user = repository.findByEmail(request.getEmail())
-        .orElseThrow();
+    User user = repository.findByEmail(request.getEmail()).orElseThrow(() -> new BadRequestException("User not found"));
+    if (user.getDeletedAt() != null) throw new BadRequestException("The user is deleted, please contact support.");
     String jwtToken = jwtService.generateToken(user);
     String refreshToken = jwtService.generateRefreshToken(user);
     revokeAllUserTokens(user);
