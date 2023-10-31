@@ -28,7 +28,7 @@ public class ProyectoIntegradorApplication {
 				var admin = RegisterRequest.builder()
 						.firstname("Admin")
 						.lastname("Mica")
-						.email("admin-mica@mail.com")
+						.email("mica@mail.com")
 						.password("password")
 						.role(ADMIN)
 						.build();
@@ -37,7 +37,7 @@ public class ProyectoIntegradorApplication {
 				try {
 					System.out.println("Admin already registered, try to login");
 					AuthenticationRequest admin = AuthenticationRequest.builder()
-							.email("admin-mica@mail.com")
+							.email("mica@mail.com")
 							.password("password")
 							.build();
 					System.out.println("Admin token: " + service.login(admin).getAccessToken());
