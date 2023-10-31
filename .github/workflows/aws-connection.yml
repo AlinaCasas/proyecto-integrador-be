@@ -23,6 +23,9 @@ jobs:
         run: mvn clean package
         working-directory: ./
 
+      - name: Iniciar el agente SSH
+        run: eval `ssh-agent -s`
+
       - name: Decodificación de la key
         run: |
           mkdir -p $HOME/.ssh
