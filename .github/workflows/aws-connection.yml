@@ -33,6 +33,15 @@ jobs:
           mkdir -p $HOME/.ssh
           ssh-keyscan 52.201.124.42 >> $HOME/.ssh/known_hosts
 
+      - name: Check Private Key
+        run: |
+          if [ ! -f "$HOME/.ssh/1023c07-grupo5.pem" ]; then
+            echo "Private key file not found on runner. Uploading it as an artifact."
+            cp "$HOME/.ssh/1023c07-grupo5.pem" "$HOME/.ssh/1023c07-grupo5.pem"
+          fi
+        env:
+          HOME: ${{ runner.home }}
+
       - name: Copia de archivos a Amazon EC2 y conexión SSH
         run: |
           scp -i $HOME/.ssh/1023c07-grupo5.pem ./target/security-0.0.1-SNAPSHOT.jar ec2-user@52.201.124.42:/var/www/
