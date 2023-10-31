@@ -15,7 +15,7 @@ jobs:
 
       - name: Copia de archivos a Amazon EC2
         run: |
-          ${{ secrets.PRIVATE_KEY }} -r ./ ec2-user@52.201.124.42:/var/www/
+           scp -i ${{ secrets.PRIVATE_KEY }} -r ./ ec2-user@52.201.124.42:/var/www/
         env:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
 
