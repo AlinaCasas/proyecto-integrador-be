@@ -22,7 +22,7 @@ jobs:
       - name: Build con Maven
         run: mvn clean package
         working-directory: ./
-        
+
       - name: Iniciar el agente SSH
         run: |
           eval $(ssh-agent -s)
@@ -38,7 +38,15 @@ jobs:
           mkdir -p $HOME/.ssh
           ssh-keyscan 52.201.124.42 >> $HOME/.ssh/known_hosts
 
-      - name: Copia de archivos a Amazon EC2 y conexión SSH
+      - name: Copia de .jar a Amazon EC2
         run: |
           scp -i $HOME/.ssh/1023c07-grupo5.pem ./target/security-0.0.1-SNAPSHOT.jar ec2-user@52.201.124.42:/var/www
-          ssh -i $HOME/.ssh/1023c07-grupo5.pem ec2-user@52.201.124.42 "sudo java -jar /var/www/security-0.0.1-SNAPSHOT.jar"
+
+      - name: Copia de Dockerfile a Amazon EC2
+        run: |
+          scp -i $HOME/.ssh/1023c07-grupo5.pem ./Dockerfile ec2-user@52.201.124.42:/var/www
+
+      - name: Build y Ejecución de Docker
+        run: |
+          ssh -i $HOME/.ssh/1023c07-grupo5.pem ec2-user@52.201.124.42 "sudo docker build -t backend-app /var/www"
+          ssh -i $HOME/.ssh/1023c07-grupo5.pem ec2-user@52.201.124.42 "sudo docker run -d -p 8000:8000 backend-app"
