@@ -13,24 +13,22 @@ jobs:
       - name: Checkout del código de backend
         uses: actions/checkout@v2
 
-      - name: Decodificar PEM
+      - name: Set up SSH key
         run: |
-          echo "${{ secrets.PRIVATE_KEY }}" | base64 --decode > key.pem
-        id: decode_pem
-        env:
-          PEM_FILE: ${{ secrets.PRIVATE_KEY }}
-          
-      - name: Copia de archivos a Amazon EC2
-        run: |
-          scp -i key.pem -r ./ ec2-user@52.201.124.42:/var/www/
+          echo "${{ secrets.PRIVATE_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
         env:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+
+      - name: Copia de archivos a Amazon EC2
+        run: |
+          scp -i private_key.pem -r ./ ec2-user@52.201.124.42:/var/www/
 
       - name: SSH para EC2
         uses: appleboy/ssh-action@master
         with:
           host: 52.201.124.42
           username: ec2-user
-          key_file: key.pem
+          key: ${{ secrets.PRIVATE_KEY }}  # Using 'key' instead of 'key_file'
           script: |
             sudo systemctl restart httpd
