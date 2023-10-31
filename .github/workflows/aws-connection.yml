@@ -40,5 +40,5 @@ jobs:
 
       - name: Copia de archivos a Amazon EC2 y conexión SSH
         run: |
-          scp -i $HOME/.ssh/1023c07-grupo5.pem ./target/security-0.0.1-SNAPSHOT.jar ec2-user@52.201.124.42:/var/www/
+          scp -i $HOME/.ssh/1023c07-grupo5.pem ./target/security-0.0.1-SNAPSHOT.jar ec2-user@52.201.124.42:/var/www
           ssh -i $HOME/.ssh/1023c07-grupo5.pem ec2-user@52.201.124.42 "sudo java -jar /var/www/security-0.0.1-SNAPSHOT.jar"
