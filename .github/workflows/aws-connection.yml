@@ -13,6 +13,11 @@ jobs:
       - name: Checkout del código de backend
         uses: actions/checkout@v2
       
+      - name: Set up de Java
+        uses: actions/setup-java@v2
+        with:
+          java-version: 17 
+
       - name: Build con Maven
         run: mvn clean package
         working-directory: ./
