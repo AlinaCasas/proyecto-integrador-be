@@ -1,4 +1,4 @@
-FROM adoptopenjdk:17-jre-hotspot
+FROM openjdk:17-oracle
 
 WORKDIR /app
 
@@ -6,4 +6,4 @@ COPY ./target/security-0.0.1-SNAPSHOT.jar /app/security-0.0.1-SNAPSHOT.jar
 
 EXPOSE 8000
 
-CMD ["java", "-jar", "app.jar"]
+CMD ["java", "-jar", "security-0.0.1-SNAPSHOT.jar"]
