@@ -23,6 +23,11 @@ jobs:
         run: mvn clean package
         working-directory: ./
 
+      - name: Decodificar key
+        run: echo ${{ secrets.PRIVATE_KEY }} | base64 --decode > $HOME/.ssh/private_key.pem
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+
       - name: Agregar clave del host al archivo known_hosts
         run: |
           mkdir -p $HOME/.ssh
@@ -32,9 +37,8 @@ jobs:
 
       - name: Copia de archivos a Amazon EC2
         run: |
-          echo "${{ secrets.PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          scp -i ${{ secrets.PRIVATE_KEY }} ./target/security-0.0.1-SNAPSHOT.jar ec2-user@52.201.124.42:/var/www/
+          chmod 600 $HOME/.ssh/private_key.pem
+          scp -i $HOME/.ssh/private_key.pem ./target/security-0.0.1-SNAPSHOT.jar ec2-user@52.201.124.42:/var/www/
         env:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
 
