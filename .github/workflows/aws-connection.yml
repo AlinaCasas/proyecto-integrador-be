@@ -24,13 +24,9 @@ jobs:
         working-directory: ./
 
       - name: Set up SSH Agent
-        run: eval `ssh-agent -s`
-
-      - name: Add Private Key to SSH Agent
         run: |
-          echo "$PRIVATE_KEY" | tr -d '\r' | ssh-add -
-        env:
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          eval `ssh-agent -s`
+          echo "${{ secrets.PRIVATE_KEY }}" | tr -d '\r' | base64 --decode | ssh-add -
 
       - name: Agregar clave del host al archivo known_hosts
         run: |
