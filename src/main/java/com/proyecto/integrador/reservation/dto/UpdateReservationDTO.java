@@ -1,4 +1,4 @@
-package com.proyecto.integrador.reservation;
+package com.proyecto.integrador.reservation.dto;
 
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -15,14 +15,13 @@ public class UpdateReservationDTO {
     @Positive(message = "Product id should be greater than 0")
     private Long productId;
 
-    @Min(value = 10, message = "Start date of reservation should be a timestamp format")
+    @Min(value = 1672531200, message = "Start date of reservation should be a timestamp format")
     @Positive(message = "Start date of reservation is invalid")
     private Long startDate;
 
-    @Min(value = 10, message = "End date of reservation should be a timestamp format")
+    @Min(value = 1672531200, message = "End date of reservation should be a timestamp format")
     @Positive(message = "Start date of reservation is invalid")
     private Long endDate;
 
-    @AssertTrue(message = "Reservation not confirmed")
     private boolean confirm;
 }

@@ -1,5 +1,7 @@
 package com.proyecto.integrador.product;
 
+import com.proyecto.integrador.product.dto.ProductDTO;
+import com.proyecto.integrador.product.dto.UpdateProductDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;

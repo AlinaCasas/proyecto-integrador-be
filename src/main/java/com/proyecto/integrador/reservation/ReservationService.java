@@ -1,9 +1,11 @@
 package com.proyecto.integrador.reservation;
 
-import com.proyecto.integrador.common.Response;
 import com.proyecto.integrador.exceptions.BadRequestException;
 import com.proyecto.integrador.product.Product;
 import com.proyecto.integrador.product.ProductRepository;
+import com.proyecto.integrador.reservation.dto.CreateReservationDTO;
+import com.proyecto.integrador.reservation.dto.ResponseReservationDTO;
+import com.proyecto.integrador.reservation.dto.UpdateReservationDTO;
 import com.proyecto.integrador.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -21,11 +24,30 @@ public class ReservationService {
     @Autowired
     private ProductRepository productRepository;
 
-    public List<ReservationDTO> findReservations(){
-        return reservationRepository.findAllReservationsBy();
+    private ResponseReservationDTO reservationToReservationDTO(Reservation reservation) {
+        return ResponseReservationDTO.builder()
+                .id(reservation.getId())
+                .userId(reservation.getUser().getId())
+                .productId(reservation.getProduct().getId())
+                .productPrice(reservation.getProductPrice())
+                .totalPrice(reservation.getTotalPrice())
+                .startDate(reservation.getStartDate())
+                .endDate(reservation.getEndDate())
+                .createdAt(reservation.getCreatedAt())
+                .updatedAt(reservation.getUpdatedAt())
+                .build();
+    }
+    public List<ResponseReservationDTO> findReservations(User user) {
+        List<Reservation> reservationList = reservationRepository.findAllReservationsByUserId(user.getId());
+        return reservationList.stream().map(this::reservationToReservationDTO).toList();
     }
 
-    public Response<ReservationResponse> createReservation(ReservationDTO reservationDTO, User user) {
+    public List<ResponseReservationDTO> findAllReservations() {
+        List<Reservation> reservationList = reservationRepository.findAllActiveReservations();
+        return reservationList.stream().map(this::reservationToReservationDTO).toList();
+    }
+
+    public ReservationResponse createReservation(CreateReservationDTO reservationDTO, User user) {
         Long productId = reservationDTO.getProductId();
         long startDate = reservationDTO.getStartDate() * 1000;
         long endDate = reservationDTO.getEndDate() * 1000;
@@ -65,22 +87,21 @@ public class ReservationService {
 
         Reservation saveReservation = reservationRepository.save(reservation);
 
-        ReservationResponse reservationResponse = new ReservationResponse(true, false);
-
-        return null;
+       return new ReservationResponse("Reservation confirmed successfully", true, false);
     }
 
-    public Response<ReservationResponse> updateReservation(Long id, UpdateReservationDTO updateReservationDTO, User user) {
+    public ReservationResponse updateReservation(Long id, UpdateReservationDTO updateReservationDTO, User user) {
 
-        Integer updateUserId = null;
         Long updateProductId = updateReservationDTO.getProductId();
-        Long updateStartDate = updateReservationDTO.getStartDate();
-        Long updateEndDate = updateReservationDTO.getEndDate();
+        Long updateStartDate = updateReservationDTO.getStartDate() != null ? updateReservationDTO.getStartDate() * 1000 : null;
+        Long updateEndDate = updateReservationDTO.getEndDate() != null ? updateReservationDTO.getEndDate() * 1000 : null;
         boolean isConfirm = updateReservationDTO.isConfirm();
 
-        if (updateUserId == null && updateProductId == null && updateStartDate == null && updateEndDate == null ) throw new BadRequestException("No data to update");
+        if (updateProductId == null && updateStartDate == null && updateEndDate == null ) throw new BadRequestException("No data to update");
 
         Reservation reservation = reservationRepository.findById(id).orElseThrow(() -> new BadRequestException("Reservation not found"));
+
+        if (!Objects.equals(reservation.getUser().getId(), user.getId())) throw new BadRequestException("You can't update this reservation");
 
         if (reservation.getDeletedAt() != null) throw new BadRequestException("The reservation is deleted, please contact support.");
 
@@ -88,12 +109,10 @@ public class ReservationService {
 
         if (reservation.getStartDate().getTime() < now) throw new BadRequestException("The reservation is already started, you can't update it");
 
-//        TODO: Only Admins can update the user and product of a reservation
-//        if (userId != null) reservation.setUser(updateReservationDTO.getUserId());
-//        if (productId != null) reservation.setProduct(updateReservationDTO.getProductId());
+        Long productId = updateProductId != null ? updateProductId : reservation.getProduct().getId();
+
         if (updateStartDate != null) reservation.setStartDate(new Date(updateStartDate));
         if (updateEndDate != null) reservation.setEndDate(new Date(updateEndDate));
-
 
         long startDate = reservation.getStartDate().getTime();
         long endDate = reservation.getEndDate().getTime();
@@ -101,9 +120,9 @@ public class ReservationService {
         if (startDate <= now) throw new BadRequestException("Start date of reservation is invalid");
         if (endDate <= now || endDate <= startDate) throw new BadRequestException("End date of reservation is invalid");
 
-        Product product = productRepository.findById(updateProductId).orElseThrow(() -> new BadRequestException("Product to reserve not found"));
+        Product product = productRepository.findById(productId).orElseThrow(() -> new BadRequestException("Product to reserve not found"));
 
-        List<Reservation> reservationList = reservationRepository.findAllActiveReservationsByProductId(updateProductId);
+        List<Reservation> reservationList = reservationRepository.findAllActiveReservationsByProductId(productId);
         reservationList.forEach(res -> {
                 long reservationStartDate = res.getStartDate().getTime();
                 long reservationEndDate = res.getEndDate().getTime();
@@ -120,22 +139,23 @@ public class ReservationService {
         float productPriceWithDiscount = price - ((price * discount) / 100);
 
         if (!isConfirm && reservation.getProductPrice() != productPriceWithDiscount) {
-            ReservationResponse reservationResponse = new ReservationResponse(false, true);
-            return new Response<ReservationResponse>(reservationResponse, "The product price to reserve changed, please confirm the reservation", false);
+            return new ReservationResponse("The product price to reserve changed, please confirm the reservation", false, true);
         }
 
         long days = (endDate - startDate) / (1000 * 60 * 60 * 24);
         float newTotalPrice = (price * days) - ((price * days) * discount / 100);
         reservation.setTotalPrice(newTotalPrice);
         reservation.setProductPrice(productPriceWithDiscount);
+        reservation.setProduct(product);
 
         Reservation saveReservation = reservationRepository.save(reservation);
-        ReservationResponse reservationResponse = new ReservationResponse(true, false);
-        return new Response<ReservationResponse>(reservationResponse, "Reservation updated successfully", true);
+        return new ReservationResponse("Reservation updated successfully", true, false);
     }
 
-    public void deleteReservation(Long id){
+    public void deleteReservation(Long id, User user) {
         Reservation reservation = reservationRepository.findById(id).orElseThrow(() -> new BadRequestException("Reservation not found"));
-        reservationRepository.deleteById(id);
+        if (!Objects.equals(reservation.getUser().getId(), user.getId())) throw new BadRequestException("You can't delete this reservation");
+        reservation.setDeletedAt(new Date());
+        reservationRepository.save(reservation);
     }
 }

@@ -1,23 +1,12 @@
-package com.proyecto.integrador.reservation;
+package com.proyecto.integrador.reservation.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.swagger.v3.oas.annotations.Hidden;
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import java.util.Date;
-import java.util.List;
-
 @Data
 @AllArgsConstructor
-public class ReservationDTO {
-
-//    @JsonIgnore
-//    @Schema(hidden = true)
-//    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
-//    @Hidden
+public class CreateReservationDTO {
     @Positive(message = "User id should be greater than 0")
     private Integer userId;
 
