@@ -3,7 +3,7 @@ name: Conexión a EC2
 on:
   push:
     branches:
-      - amazon-deploy
+      - main
 
 jobs:
   deploy:
@@ -13,22 +13,28 @@ jobs:
       - name: Checkout del código de backend
         uses: actions/checkout@v2
       
-      - name: Build con Maven
-        run: mvn clean package
-        working-directory: ./
+      - name: Set up de Java
+        uses: actions/setup-java@v2
+        with:
+          java-version: 17 
+          distribution: 'adopt'
 
-      - name: Copia de archivos a Amazon EC2
+      - name: Iniciar el agente SSH
         run: |
-          scp -i ${{ secrets.PRIVATE_KEY }} ./target/security-0.0.1-SNAPSHOT.jar ec2-user@52.201.124.42:/var/www/
+          eval $(ssh-agent -s)
+          mkdir -p $HOME/.ssh
+          echo "${{ secrets.PRIVATE_KEY }}" | base64 --decode > $HOME/.ssh/1023c07-grupo5.pem
+          chmod 600 $HOME/.ssh/1023c07-grupo5.pem
+          ssh-add $HOME/.ssh/1023c07-grupo5.pem
         env:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
 
-      - name: SSH para EC2
-        uses: appleboy/ssh-action@master
-        with:
-          host: 52.201.124.42
-          username: ec2-user
-          key_file: ${{ secrets.PRIVATE_KEY }}
-          script: |
-            cd /var/www
-            java -jar security-0.0.1-SNAPSHOT.jar
+      - name: Agregar clave del host al archivo known_hosts
+        run: |
+          mkdir -p $HOME/.ssh
+          ssh-keyscan 52.201.124.42 >> $HOME/.ssh/known_hosts
+
+      - name: Copia de archivos a Amazon EC2 y conexión SSH
+        run: |
+          scp -i $HOME/.ssh/1023c07-grupo5.pem ./target/security-0.0.1-SNAPSHOT.jar ec2-user@52.201.124.42:/var/www
+          ssh -i $HOME/.ssh/1023c07-grupo5.pem ec2-user@52.201.124.42 "sudo java -jar /var/www/security-0.0.1-SNAPSHOT.jar"
