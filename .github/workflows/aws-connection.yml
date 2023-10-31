@@ -24,7 +24,9 @@ jobs:
         working-directory: ./
 
       - name: Decodificación de la key
-        run: echo "${{ secrets.PRIVATE_KEY }}" | base64 --decode > $HOME/.ssh/1023c07-grupo5.pem
+        run: |
+          mkdir -p $HOME/.ssh
+          echo "${{ secrets.PRIVATE_KEY }}" | base64 --decode > $HOME/.ssh/1023c07-grupo5.pem
         env:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
 
