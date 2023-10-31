@@ -13,9 +13,16 @@ jobs:
       - name: Checkout del código de backend
         uses: actions/checkout@v2
 
+      - name: Decodificar PEM
+        run: |
+          echo "${{ secrets.PRIVATE_KEY }}" | base64 --decode > key.pem
+        id: decode_pem
+        env:
+          PEM_FILE: ${{ secrets.PRIVATE_KEY }}
+          
       - name: Copia de archivos a Amazon EC2
         run: |
-          scp -i ${{ secrets.PRIVATE_KEY }} -r ./ ec2-user@52.201.124.42:/var/www/
+          scp -i key.pem -r ./ ec2-user@52.201.124.42:/var/www/
         env:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
 
@@ -24,6 +31,6 @@ jobs:
         with:
           host: 52.201.124.42
           username: ec2-user
-          key_file: ${{ secrets.PRIVATE_KEY }}
+          key_file: key.pem
           script: |
             sudo systemctl restart httpd
