@@ -4,20 +4,22 @@ import com.proyecto.integrador.auditing.Auditable;
 import com.proyecto.integrador.product.Product;
 import com.proyecto.integrador.user.User;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.Getter;
+import lombok.*;
 
 import java.util.Date;
 
 @Getter
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "reservations")
 public class Reservation extends Auditable {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column()
-    private String id;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "userId", nullable = false, referencedColumnName = "id")
@@ -28,7 +30,10 @@ public class Reservation extends Auditable {
     private Product product;
 
     @Column(nullable = false)
-    private Float price;
+    private Float productPrice;
+
+    @Column(nullable = false)
+    private Float totalPrice;
 
     @Column(nullable = false)
     private Date startDate;

@@ -14,6 +14,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 
 import static com.proyecto.integrador.user.Role.ADMIN;
+import static com.proyecto.integrador.user.Role.USER;
 import static org.springframework.http.HttpMethod.*;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
@@ -45,6 +46,8 @@ public class SecurityConfiguration {
                                 .requestMatchers(POST, "/api/v1/products/**").hasAnyRole(ADMIN.name())
                                 .requestMatchers(PUT, "/api/v1/products/**").hasAnyRole(ADMIN.name())
                                 .requestMatchers(DELETE, "/api/v1/products/**").hasAnyRole(ADMIN.name())
+                                .requestMatchers("/api/v1/reservations/admin/**").hasAnyRole(ADMIN.name())
+                                .requestMatchers("/api/v1/reservations/**").hasAnyRole(USER.name(), ADMIN.name())
                                 .anyRequest()
                                 .authenticated()
                 )

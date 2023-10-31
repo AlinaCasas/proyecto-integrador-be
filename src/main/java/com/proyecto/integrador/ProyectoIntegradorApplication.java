@@ -1,5 +1,6 @@
 package com.proyecto.integrador;
 
+import com.proyecto.integrador.auth.AuthenticationRequest;
 import com.proyecto.integrador.auth.AuthenticationService;
 import com.proyecto.integrador.auth.RegisterRequest;
 import org.springframework.boot.CommandLineRunner;
@@ -23,14 +24,27 @@ public class ProyectoIntegradorApplication {
 			AuthenticationService service
 	) {
 		return args -> {
-//			var admin = RegisterRequest.builder()
-//					.firstname("Admin")
-//					.lastname("Admin")
-//					.email("admin@mail.com")
-//					.password("password")
-//					.role(ADMIN)
-//					.build();
-//			System.out.println("Admin token: " + service.rootRegister(admin).getAccessToken());
+			try {
+				var admin = RegisterRequest.builder()
+						.firstname("Admin")
+						.lastname("Admin")
+						.email("admin@mail.com")
+						.password("password")
+						.role(ADMIN)
+						.build();
+				System.out.println("Admin token: " + service.rootRegister(admin).getAccessToken());
+			} catch (Exception e) {
+				try {
+					System.out.println("Admin already registered, try to login");
+					AuthenticationRequest admin = AuthenticationRequest.builder()
+							.email("admin@mail.com")
+							.password("password")
+							.build();
+					System.out.println("Admin token: " + service.login(admin).getAccessToken());
+				} catch (Exception ex) {
+					System.out.println("Admin login failed, check the credentials");
+				}
+			}
 		};
 	}
 }

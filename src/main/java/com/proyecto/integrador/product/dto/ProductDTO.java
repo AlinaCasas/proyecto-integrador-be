@@ -1,4 +1,4 @@
-package com.proyecto.integrador.product;
+package com.proyecto.integrador.product.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

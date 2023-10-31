@@ -56,7 +56,7 @@ public class Product extends Auditable {
   })
   private List<String> images;
 
-  @Column(nullable = true)
+  @Column(columnDefinition = "integer default 0")
   @Min(value = 0, message = "Discount should be greater than 0%")
   @Max(value = 100, message = "Discount should be less than 100%")
   private Integer discount;

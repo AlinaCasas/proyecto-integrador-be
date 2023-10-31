@@ -1,6 +1,7 @@
 package com.proyecto.integrador.auth;
 
 import com.proyecto.integrador.config.JwtService;
+import com.proyecto.integrador.exceptions.BadRequestException;
 import com.proyecto.integrador.token.Token;
 import com.proyecto.integrador.token.TokenRepository;
 import com.proyecto.integrador.token.TokenType;
@@ -18,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -39,8 +41,8 @@ public class AuthenticationService {
   }
 
   private AuthenticationResponse saveUser(User user) {
-    var jwtToken = jwtService.generateToken(user);
-    var refreshToken = jwtService.generateRefreshToken(user);
+    String jwtToken = jwtService.generateToken(user);
+    String refreshToken = jwtService.generateRefreshToken(user);
     saveUserToken(user, jwtToken);
     return AuthenticationResponse.builder()
             .accessToken(jwtToken)
@@ -49,28 +51,36 @@ public class AuthenticationService {
   }
 
   public AuthenticationResponse rootRegister(RegisterRequest request) {
-    User user = this.createUser(request);
-    user.setRole(Role.ADMIN);
-    var savedUser = repository.save(user);
-    var jwtToken = jwtService.generateToken(user);
-    var refreshToken = jwtService.generateRefreshToken(user);
-    saveUserToken(savedUser, jwtToken);
-    return AuthenticationResponse.builder()
-            .accessToken(jwtToken)
-            .refreshToken(refreshToken)
-            .build();
+    try {
+      User user = this.createUser(request);
+      user.setRole(Role.ADMIN);
+      User savedUser = repository.save(user);
+      String jwtToken = jwtService.generateToken(user);
+      String refreshToken = jwtService.generateRefreshToken(user);
+      saveUserToken(savedUser, jwtToken);
+      return AuthenticationResponse.builder()
+              .accessToken(jwtToken)
+              .refreshToken(refreshToken)
+              .build();
+    } catch (Exception e) {
+      throw new BadRequestException("The admin already exists");
+    }
   }
 
   public AuthenticationResponse register(RegisterRequest request) {
-    User user = this.createUser(request);
-    var savedUser = repository.save(user);
-    var jwtToken = jwtService.generateToken(user);
-    var refreshToken = jwtService.generateRefreshToken(user);
-    saveUserToken(savedUser, jwtToken);
-    return AuthenticationResponse.builder()
-        .accessToken(jwtToken)
-            .refreshToken(refreshToken)
-        .build();
+    try {
+      User user = this.createUser(request);
+      User savedUser = repository.save(user);
+      String jwtToken = jwtService.generateToken(user);
+      String refreshToken = jwtService.generateRefreshToken(user);
+      saveUserToken(savedUser, jwtToken);
+      return AuthenticationResponse.builder()
+              .accessToken(jwtToken)
+              .refreshToken(refreshToken)
+              .build();
+    } catch (Exception e) {
+    throw new BadRequestException("The email is taken, use another one");
+    }
   }
 
   public AuthenticationResponse login(AuthenticationRequest request) {
@@ -80,10 +90,10 @@ public class AuthenticationService {
             request.getPassword()
         )
     );
-    var user = repository.findByEmail(request.getEmail())
-        .orElseThrow();
-    var jwtToken = jwtService.generateToken(user);
-    var refreshToken = jwtService.generateRefreshToken(user);
+    User user = repository.findByEmail(request.getEmail()).orElseThrow(() -> new BadRequestException("User not found"));
+    if (user.getDeletedAt() != null) throw new BadRequestException("The user is deleted, please contact support.");
+    String jwtToken = jwtService.generateToken(user);
+    String refreshToken = jwtService.generateRefreshToken(user);
     revokeAllUserTokens(user);
     saveUserToken(user, jwtToken);
     return AuthenticationResponse.builder()
@@ -93,7 +103,7 @@ public class AuthenticationService {
   }
 
   private void saveUserToken(User user, String jwtToken) {
-    var token = Token.builder()
+    Token token = Token.builder()
         .user(user)
         .token(jwtToken)
         .tokenType(TokenType.BEARER)
@@ -104,7 +114,7 @@ public class AuthenticationService {
   }
 
   private void revokeAllUserTokens(User user) {
-    var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
+    List<Token> validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
     if (validUserTokens.isEmpty())
       return;
     validUserTokens.forEach(token -> {
@@ -127,13 +137,13 @@ public class AuthenticationService {
     refreshToken = authHeader.substring(7);
     userEmail = jwtService.extractUsername(refreshToken);
     if (userEmail != null) {
-      var user = this.repository.findByEmail(userEmail)
+      User user = this.repository.findByEmail(userEmail)
               .orElseThrow();
       if (jwtService.isTokenValid(refreshToken, user)) {
-        var accessToken = jwtService.generateToken(user);
+        String accessToken = jwtService.generateToken(user);
         revokeAllUserTokens(user);
         saveUserToken(user, accessToken);
-        var authResponse = AuthenticationResponse.builder()
+        AuthenticationResponse authResponse = AuthenticationResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();

@@ -1,10 +1,13 @@
 package com.proyecto.integrador.product;
 
 import com.proyecto.integrador.exceptions.BadRequestException;
+import com.proyecto.integrador.product.dto.ProductDTO;
+import com.proyecto.integrador.product.dto.UpdateProductDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -20,6 +23,7 @@ public class ProductService {
 
     public ProductDTO createProduct(Product product) {
         try {
+            if (product.getDiscount() == null) product.setDiscount(0);
             Product saveProduct = productRepository.save(product);
             return new ProductDTO(saveProduct.getId(), saveProduct.getName(), saveProduct.getCategory(), saveProduct.getBrand(), saveProduct.getModel(), saveProduct.getDescription(), saveProduct.getPrice(), saveProduct.getImages(), saveProduct.getDiscount());
         } catch (Exception e) {
@@ -58,6 +62,7 @@ public class ProductService {
 
     public void deleteProduct(Long id){
         Product product = productRepository.findById(id).orElseThrow(() -> new BadRequestException("Product not found"));
-        productRepository.deleteById(id);
+        product.setDeletedAt(new Date());
+        productRepository.save(product);
     }
 }
