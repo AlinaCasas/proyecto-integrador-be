@@ -23,18 +23,21 @@ jobs:
         run: mvn clean package
         working-directory: ./
 
+      - name: Set up SSH Agent
+        run: eval `ssh-agent -s`
+
+      - name: Add Private Key to SSH Agent
+        run: |
+          echo "$PRIVATE_KEY" | tr -d '\r' | ssh-add -
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+
       - name: Agregar clave del host al archivo known_hosts
         run: |
           mkdir -p $HOME/.ssh
           ssh-keyscan 52.201.124.42 >> $HOME/.ssh/known_hosts
-        env:
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
 
       - name: Copia de archivos a Amazon EC2 y conexión SSH
         run: |
-          echo -n "${{ secrets.PRIVATE_KEY }}" > $HOME/.ssh/1023c07-grupo5.pem
-          chmod 600 $HOME/.ssh/1023c07-grupo5.pem
           scp -i $HOME/.ssh/1023c07-grupo5.pem ./target/security-0.0.1-SNAPSHOT.jar ec2-user@52.201.124.42:/var/www/
           ssh -i $HOME/.ssh/1023c07-grupo5.pem ec2-user@52.201.124.42 "cd /var/www && java -jar security-0.0.1-SNAPSHOT.jar"
-        env:
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
