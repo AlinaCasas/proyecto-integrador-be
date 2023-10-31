@@ -24,20 +24,14 @@ jobs:
         working-directory: ./
 
       - name: Iniciar el agente SSH
-        run: eval `ssh-agent -s`
-
-      - name: Decodificación de la key
         run: |
+          eval $(ssh-agent -s)
           mkdir -p $HOME/.ssh
           echo "${{ secrets.PRIVATE_KEY }}" | base64 --decode > $HOME/.ssh/1023c07-grupo5.pem
+          chmod 600 $HOME/.ssh/1023c07-grupo5.pem
+          ssh-add $HOME/.ssh/1023c07-grupo5.pem
         env:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-
-      - name: Actualización de permisos de la key
-        run: chmod 600 $HOME/.ssh/1023c07-grupo5.pem
-
-      - name: Agregar la key para SSH
-        run: ssh-add $HOME/.ssh/1023c07-grupo5.pem
 
       - name: Agregar clave del host al archivo known_hosts
         run: |
