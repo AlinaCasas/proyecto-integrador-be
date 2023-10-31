@@ -23,24 +23,21 @@ jobs:
         run: mvn clean package
         working-directory: ./
 
-      - name: Set up SSH Agent
-        run: |
-          eval `ssh-agent -s`
-          echo "${{ secrets.PRIVATE_KEY }}" | tr -d '\r' | base64 --decode | ssh-add -
+      - name: Decodificación de la key
+        run: echo "${{ secrets.PRIVATE_KEY }}" | base64 --decode > $HOME/.ssh/1023c07-grupo5.pem
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+
+      - name: Actualización de permisos de la key
+        run: chmod 600 $HOME/.ssh/1023c07-grupo5.pem
+
+      - name: Agregar la key para SSH
+        run: ssh-add $HOME/.ssh/1023c07-grupo5.pem
 
       - name: Agregar clave del host al archivo known_hosts
         run: |
           mkdir -p $HOME/.ssh
           ssh-keyscan 52.201.124.42 >> $HOME/.ssh/known_hosts
-
-      - name: Check Private Key
-        run: |
-          if [ ! -f "$HOME/.ssh/1023c07-grupo5.pem" ]; then
-            echo "Private key file not found on runner. Uploading it as an artifact."
-            cp "$HOME/.ssh/1023c07-grupo5.pem" "$HOME/.ssh/1023c07-grupo5.pem"
-          fi
-        env:
-          HOME: ${{ runner.home }}
 
       - name: Copia de archivos a Amazon EC2 y conexión SSH
         run: |
