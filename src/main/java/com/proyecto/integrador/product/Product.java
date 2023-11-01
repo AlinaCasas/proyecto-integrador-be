@@ -50,9 +50,9 @@ public class Product extends Auditable {
   @Positive(message = "Price should be greater than 0")
   private Float price;
 
-  @Column(nullable = true)
+  @Column(nullable = true, length = 2500)
   @Size.List({
-    @Size(max = 5, message = "Maximum 5 images are allowed")
+    @Size(max = 7, message = "Maximum 7 images are allowed")
   })
   private List<String> images;
 
