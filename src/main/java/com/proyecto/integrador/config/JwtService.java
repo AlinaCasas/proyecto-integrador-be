@@ -1,5 +1,6 @@
 package com.proyecto.integrador.config;
 
+import com.proyecto.integrador.user.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -34,32 +35,36 @@ public class JwtService {
     return claimsResolver.apply(claims);
   }
 
-  public String generateToken(UserDetails userDetails) {
-    return generateToken(new HashMap<>(), userDetails);
+  public String generateToken(User user) {
+    return generateToken(new HashMap<>(), user);
   }
 
   public String generateToken(
       Map<String, Object> extraClaims,
-      UserDetails userDetails
+      User user
   ) {
-    return buildToken(extraClaims, userDetails, jwtExpiration);
+    return buildToken(extraClaims, user, jwtExpiration);
   }
 
   public String generateRefreshToken(
-      UserDetails userDetails
+      User user
   ) {
-    return buildToken(new HashMap<>(), userDetails, refreshExpiration);
+    return buildToken(new HashMap<>(), user, refreshExpiration);
   }
 
   private String buildToken(
           Map<String, Object> extraClaims,
-          UserDetails userDetails,
+          User user,
           long expiration
   ) {
+    Map<String, Object> claims = new HashMap<>(extraClaims);
+      claims.put("firstName", user.getFirstname());
+      claims.put("lastName", user.getLastname());
+      claims.put("role", user.getRole());
     return Jwts
             .builder()
-            .setClaims(extraClaims)
-            .setSubject(userDetails.getUsername())
+            .setClaims(claims)
+            .setSubject(user.getUsername())
             .setIssuedAt(new Date(System.currentTimeMillis()))
             .setExpiration(new Date(System.currentTimeMillis() + expiration))
             .signWith(getSignInKey(), SignatureAlgorithm.HS256)
