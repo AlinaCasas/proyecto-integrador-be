@@ -1,11 +1,13 @@
 package com.proyecto.integrador.product.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 
 import java.util.List;
 
 @Data
+@Builder
 @AllArgsConstructor
 public class ProductDTO {
     private Long id;
@@ -17,4 +19,5 @@ public class ProductDTO {
     private Float price;
     private List<String> images;
     private Integer discount;
+    private List<ProductReservationDTO> reservations;
 }
