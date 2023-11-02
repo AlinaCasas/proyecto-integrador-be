@@ -2,9 +2,17 @@ package com.proyecto.integrador.product;
 
 import com.proyecto.integrador.exceptions.BadRequestException;
 import com.proyecto.integrador.product.dto.ProductDTO;
+import com.proyecto.integrador.product.dto.ProductReservationDTO;
 import com.proyecto.integrador.product.dto.UpdateProductDTO;
+import com.proyecto.integrador.reservation.Reservation;
+import com.proyecto.integrador.reservation.ReservationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -17,15 +25,62 @@ public class ProductService {
     @Autowired
     private ProductRepository productRepository;
 
-    public List<ProductDTO> findProducts(){
-        return productRepository.findAllProductsBy();
+    @Autowired
+    private ReservationRepository reservationRepository;
+
+    private ProductReservationDTO reservationToProductReservationDTO (Reservation reservation) {
+        return ProductReservationDTO.builder()
+                .id(reservation.getId())
+                .startDate(reservation.getStartDate().getTime())
+                .endDate(reservation.getEndDate().getTime())
+                .build();
+    }
+    private ProductDTO productToProductDTO(Product product) {
+        List<ProductReservationDTO> reservations = product.getReservations().stream().map(this::reservationToProductReservationDTO).toList();
+        return ProductDTO.builder()
+                .id(product.getId())
+                .name(product.getName())
+                .category(product.getCategory())
+                .brand(product.getBrand())
+                .model(product.getModel())
+                .description(product.getDescription())
+                .price(product.getPrice())
+                .images(product.getImages())
+                .discount(product.getDiscount())
+                .reservations(reservations)
+                .build();
+    }
+    public Page<ProductDTO> findProducts(Long id, String name, String category, String brand, String model, String description, Float priceMin, Float priceMax, int page, int limit, String sort, String direction) {
+        Specification<Product> spec = Specification.where(ProductSpecification.hasId(id))
+                .and(ProductSpecification.hasName(name))
+                .and(ProductSpecification.hasCategory(category))
+                .and(ProductSpecification.hasBrand(brand))
+                .and(ProductSpecification.hasModel(model))
+                .and(ProductSpecification.hasDescription(description))
+                .and(ProductSpecification.priceGreaterThanOrEqualTo(priceMin))
+                .and(ProductSpecification.priceLessThanOrEqualTo(priceMax));
+
+        Sort.Direction sortOrder = "desc".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        page = page == 0 ? 0 : page - 1;
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(sortOrder, sort));
+        Page<Product> productPage = productRepository.findAll(spec, pageable);
+        return productPage.map(this::productToProductDTO);
+    }
+
+    public ProductDTO findProductById(Long id) {
+        Product product = productRepository.findById(id).orElseThrow(() -> new BadRequestException("Product not found"));
+        if (product.getDeletedAt() != null) throw new BadRequestException("The product is deleted, please contact support.");
+
+        List<Reservation> reservationList = reservationRepository.findAllActiveReservationsByProductId(id);
+        List<ProductReservationDTO> reservations = reservationList.stream().map(this::reservationToProductReservationDTO).toList();
+        return new ProductDTO(product.getId(), product.getName(), product.getCategory(), product.getBrand(), product.getModel(), product.getDescription(), product.getPrice(), product.getImages(), product.getDiscount(), reservations);
     }
 
     public ProductDTO createProduct(Product product) {
         try {
             if (product.getDiscount() == null) product.setDiscount(0);
             Product saveProduct = productRepository.save(product);
-            return new ProductDTO(saveProduct.getId(), saveProduct.getName(), saveProduct.getCategory(), saveProduct.getBrand(), saveProduct.getModel(), saveProduct.getDescription(), saveProduct.getPrice(), saveProduct.getImages(), saveProduct.getDiscount());
+            return new ProductDTO(saveProduct.getId(), saveProduct.getName(), saveProduct.getCategory(), saveProduct.getBrand(), saveProduct.getModel(), saveProduct.getDescription(), saveProduct.getPrice(), saveProduct.getImages(), saveProduct.getDiscount(), null);
         } catch (Exception e) {
             throw new BadRequestException("The product already exists, use another name");
         }
@@ -57,7 +112,9 @@ public class ProductService {
         if (discount != null) product.setDiscount(updateProductDTO.getDiscount());
 
         Product saveProduct = productRepository.save(product);
-        return new ProductDTO(saveProduct.getId(), saveProduct.getName(), saveProduct.getCategory(), saveProduct.getBrand(), saveProduct.getModel(), saveProduct.getDescription(), saveProduct.getPrice(), saveProduct.getImages(), saveProduct.getDiscount());
+
+        List<ProductReservationDTO> reservations = saveProduct.getReservations().stream().map(this::reservationToProductReservationDTO).toList();
+        return new ProductDTO(saveProduct.getId(), saveProduct.getName(), saveProduct.getCategory(), saveProduct.getBrand(), saveProduct.getModel(), saveProduct.getDescription(), saveProduct.getPrice(), saveProduct.getImages(), saveProduct.getDiscount(), reservations);
     }
 
     public void deleteProduct(Long id){

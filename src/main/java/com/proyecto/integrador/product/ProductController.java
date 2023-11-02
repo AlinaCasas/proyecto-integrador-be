@@ -3,11 +3,16 @@ package com.proyecto.integrador.product;
 import com.proyecto.integrador.product.dto.ProductDTO;
 import com.proyecto.integrador.product.dto.UpdateProductDTO;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.Errors;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,14 +20,33 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/products")
+@Validated
 public class ProductController {
 
     @Autowired
     private ProductService service;
 
     @GetMapping
-    public ResponseEntity<List<ProductDTO>> find() {
-        return ResponseEntity.status(HttpStatus.OK).body(service.findProducts());
+    public ResponseEntity<Page<ProductDTO>> find(
+            @RequestParam(required = false) Long id,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String brand,
+            @RequestParam(required = false) String model,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) Float priceMin,
+            @RequestParam(required = false) Float priceMax,
+            @RequestParam(defaultValue = "1") @Min(0) Integer page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(10) Integer limit,
+            @RequestParam(defaultValue = "name") @Pattern(regexp = "^(id|name|category|brand|model|description|price)$") String sort,
+            @RequestParam(defaultValue = "asc") String direction
+            ) {
+        return ResponseEntity.status(HttpStatus.OK).body(service.findProducts(id, name, category, brand, model, description, priceMin, priceMax, page, limit, sort, direction));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductDTO> findById(@PathVariable("id") Long id) {
+        return ResponseEntity.status(HttpStatus.OK).body(service.findProductById(id));
     }
 
     @PostMapping
