@@ -15,6 +15,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 
@@ -37,6 +38,8 @@ public class ProductService {
     }
     private ProductDTO productToProductDTO(Product product) {
         List<ProductReservationDTO> reservations = product.getReservations().stream().map(this::reservationToProductReservationDTO).toList();
+        if (reservations.isEmpty()) reservations = null;
+
         return ProductDTO.builder()
                 .id(product.getId())
                 .name(product.getName())
@@ -50,20 +53,33 @@ public class ProductService {
                 .reservations(reservations)
                 .build();
     }
-    public Page<ProductDTO> findProducts(Long id, String name, String category, String brand, String model, String description, Float priceMin, Float priceMax, int page, int limit, String sort, String direction) {
-        Specification<Product> spec = Specification.where(ProductSpecification.hasId(id))
-                .and(ProductSpecification.hasName(name))
-                .and(ProductSpecification.hasCategory(category))
-                .and(ProductSpecification.hasBrand(brand))
-                .and(ProductSpecification.hasModel(model))
-                .and(ProductSpecification.hasDescription(description))
-                .and(ProductSpecification.priceGreaterThanOrEqualTo(priceMin))
-                .and(ProductSpecification.priceLessThanOrEqualTo(priceMax));
 
-        Sort.Direction sortOrder = "desc".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
+    public Page<ProductDTO> findProductsUsingSQL(Long id, String name, String category, String brand, String model, String description, Float priceMin, Float priceMax, Integer discount, int page, int limit, String sort, String order, Long startDate, Long endDate) {
+        if (startDate != null && endDate == null || startDate == null && endDate != null) {
+            throw new BadRequestException("If you want to filter by date, you must send both start and end date");
+        }
+        if (startDate != null && startDate > endDate) {
+            throw new BadRequestException("The start date must be less than the end date");
+        }
         page = page == 0 ? 0 : page - 1;
-        Pageable pageable = PageRequest.of(page, limit, Sort.by(sortOrder, sort));
-        Page<Product> productPage = productRepository.findAll(spec, pageable);
+        Pageable pageable = PageRequest.of(page, limit);
+
+        Page<Product> productPage = productRepository.findAllWithFilters(
+                id,
+                name,
+                category,
+                brand,
+                model,
+                description,
+                priceMin,
+                priceMax,
+                discount,
+                startDate != null ? new Date(startDate * 1000) : null,
+                endDate != null ? new Date(endDate * 1000) : null,
+                sort,
+                order,
+                pageable
+        );
         return productPage.map(this::productToProductDTO);
     }
 
