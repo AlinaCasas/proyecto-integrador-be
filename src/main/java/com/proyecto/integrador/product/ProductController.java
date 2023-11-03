@@ -39,8 +39,8 @@ public class ProductController {
             @RequestParam(required = false) @Min(0) @Max(100) Integer discount,
             @RequestParam(defaultValue = "1") @Min(0) Integer page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(10) Integer limit,
-            @RequestParam(defaultValue = "name", required = false) @Pattern(regexp = "^(id|name|category|brand|model|description|price)$") String sort,
-            @RequestParam(defaultValue = "asc") String order,
+            @RequestParam(defaultValue = "name") @Pattern(regexp = "^(id|name|category|brand|model|description|price|discount)$") String sort,
+            @RequestParam(defaultValue = "asc") @Pattern(regexp = "^(asc|desc|random)$") String order,
             @RequestParam(required = false) @Min(1672531200) Long startDate,
             @RequestParam(required = false) @Min(1672531200) Long endDate
             ) {
