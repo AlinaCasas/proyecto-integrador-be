@@ -36,12 +36,15 @@ public class ProductController {
             @RequestParam(required = false) String description,
             @RequestParam(required = false) Float priceMin,
             @RequestParam(required = false) Float priceMax,
+            @RequestParam(required = false) @Min(0) @Max(100) Integer discount,
             @RequestParam(defaultValue = "1") @Min(0) Integer page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(10) Integer limit,
-            @RequestParam(defaultValue = "name") @Pattern(regexp = "^(id|name|category|brand|model|description|price)$") String sort,
-            @RequestParam(defaultValue = "asc") String direction
+            @RequestParam(defaultValue = "name", required = false) @Pattern(regexp = "^(id|name|category|brand|model|description|price)$") String sort,
+            @RequestParam(defaultValue = "asc") String order,
+            @RequestParam(required = false) @Min(1672531200) Long startDate,
+            @RequestParam(required = false) @Min(1672531200) Long endDate
             ) {
-        return ResponseEntity.status(HttpStatus.OK).body(service.findProducts(id, name, category, brand, model, description, priceMin, priceMax, page, limit, sort, direction));
+        return ResponseEntity.status(HttpStatus.OK).body(service.findProductsUsingSQL(id, name, category, brand, model, description, priceMin, priceMax, discount, page, limit, sort, order, startDate, endDate));
     }
 
     @GetMapping("/{id}")
