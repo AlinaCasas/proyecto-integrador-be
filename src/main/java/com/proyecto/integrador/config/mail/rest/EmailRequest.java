@@ -1,22 +1,24 @@
 package com.proyecto.integrador.config.mail.rest;
 
-public class EmailBody {
-    private String email;
+public class EmailRequest {
+    private String to;
     private String subject;
     private String content;
 
-    public EmailBody(String email, String subject, String content) {
-        this.email = email;
+    public EmailRequest(String to, String subject, String content) {
+        this.to = to;
         this.subject = subject;
         this.content = content;
     }
 
-    public String getEmail() {
-        return email;
+    // getters y setters
+
+    public String getTo() {
+        return to;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setTo(String to) {
+        this.to = to;
     }
 
     public String getSubject() {

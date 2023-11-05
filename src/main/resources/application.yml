@@ -3,12 +3,12 @@ server:
 
 spring:
   datasource:
-#    url: jdbc:mysql://db.ctd.academy:3306/1023c07_GRUPO5
-#    username: 1023c07_GRUPO5
-#    password: cai1Eing
-    url: jdbc:mysql://localhost:3306/proyectointegrador
-    username: root
-    password: 3467
+    url: jdbc:mysql://db.ctd.academy:3306/1023c07_GRUPO5
+    username: 1023c07_GRUPO5
+    password: cai1Eing
+#    url: jdbc:mysql://localhost:3306/proyectointegrador
+#    username: root
+#    password: 3467
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -28,14 +28,15 @@ application:
       refresh-token:
         expiration: 604800000 # 7 days
 
-  server.port=8080
-  spring.mail.host=smtp.gmail.com
-  spring.mail.port=587
-  spring.mail.username=notasprestadas@gmail.com #email para enviar
-  spring.mail.password=udhe qmuc pihb pljv #contraseña de aplicación
-  spring.mail.properties.mail.smtp.starttls.enable=true
-  spring.mail.properties.mail.smtp.starttls.required=true
-  spring.mail.properties.mail.smtp.auth=true
-  spring.mail.properties.mail.smtp.connectiontimeout=5000
-  spring.mail.properties.mail.smtp.timeout=5000
-  spring.mail.properties.mail.smtp.writetimeout=5000
+  spring:
+    mail:
+      host: smtp.gmail.com
+      port: 587
+      username: notasprestadas@gmail.com
+      password: udheqmucpihbpljv
+      properties:
+        mail:
+          smtp:
+            auth: true
+            starttls:
+              enable: true
