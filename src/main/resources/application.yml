@@ -33,7 +33,7 @@ application:
       host: smtp.gmail.com
       port: 587
       username: notasprestadas@gmail.com
-      password: udheqmucpihbpljv
+
       properties:
         mail:
           smtp:
