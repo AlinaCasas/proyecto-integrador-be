@@ -1,14 +1,21 @@
 package com.proyecto.integrador.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.context.annotation.PropertySource;
 
 import java.util.Properties;
 
 @Configuration
+@PropertySource("classpath:secrets.properties") // Especifica la ubicación del archivo secrets.properties
 public class EmailConfig {
+
+    @Value("${mail.password}")
+    private String mailPassword;
+
 
     @Bean
     public JavaMailSender javaMailSender() {
@@ -16,7 +23,7 @@ public class EmailConfig {
         mailSender.setHost("smtp.gmail.com");
         mailSender.setPort(587);
         mailSender.setUsername("notasprestadas@gmail.com");
-        mailSender.setPassword("udheqmucpihbpljv");
+        mailSender.setPassword(mailPassword);
 
         Properties properties = new Properties();
         properties.put("mail.smtp.auth", "true");
