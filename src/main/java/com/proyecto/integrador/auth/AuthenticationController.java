@@ -29,7 +29,7 @@ public class AuthenticationController {
       @RequestBody @Valid RegisterRequest request
   ) {
 
-    String subject = "¡Bienvenido a Notas Prestadas!";
+    String subject = "¡Bienvenid@ a Notas Prestadas!";
     String content = "¡Hola "+request.getFirstname()+"!\n\n" +
             "En nombre de todo el equipo de Notas Prestadas, te damos la más cordial bienvenida a nuestra plataforma de alquiler de instrumentos musicales. Estamos emocionados de que te unas a nuestra comunidad de amantes de la música.\n\n" +
             "En Notas Prestadas, podrás alquilar una amplia gama de instrumentos de alta calidad, desde guitarras y teclados hasta tambores y más. Nuestra misión es facilitar tu viaje musical y ayudarte a encontrar el instrumento perfecto para expresar tu creatividad.\n\n" +
