@@ -1,4 +1,4 @@
-FROM amazoncorretto:17.0.7-alpine
+FROM openjdk:17-oracle
 
 WORKDIR /app
 
