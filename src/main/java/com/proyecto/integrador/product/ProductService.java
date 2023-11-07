@@ -1,5 +1,8 @@
 package com.proyecto.integrador.product;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.proyecto.integrador.exceptions.BadRequestException;
 import com.proyecto.integrador.product.dto.ProductDTO;
 import com.proyecto.integrador.product.dto.ProductReservationDTO;
@@ -14,10 +17,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +36,9 @@ public class ProductService {
     @Autowired
     private ReservationRepository reservationRepository;
 
+    @Autowired
+    private AmazonS3 amazonS3;
+
     private ProductReservationDTO reservationToProductReservationDTO (Reservation reservation) {
         return ProductReservationDTO.builder()
                 .id(reservation.getId())
@@ -36,9 +46,12 @@ public class ProductService {
                 .endDate(reservation.getEndDate().getTime())
                 .build();
     }
+
     private ProductDTO productToProductDTO(Product product) {
-        List<ProductReservationDTO> reservations = product.getReservations().stream().map(this::reservationToProductReservationDTO).toList();
-        if (reservations.isEmpty()) reservations = null;
+        List<ProductReservationDTO> reservations = new ArrayList<>();
+        if (product.getReservations() != null && !product.getReservations().isEmpty()) {
+            reservations = product.getReservations().stream().map(this::reservationToProductReservationDTO).toList();
+        }
 
         return ProductDTO.builder()
                 .id(product.getId())
@@ -100,6 +113,62 @@ public class ProductService {
         } catch (Exception e) {
             throw new BadRequestException("The product already exists, use another name");
         }
+    }
+
+
+    private List<String> uploadImagesToS3(MultipartFile[] images, String productId) {
+        List<String> imageUrls = new ArrayList<>();
+        String bucketName = "1023c07-grupo5";
+        String folderName = "images/products/" + productId + "/";
+        if (images != null) {
+            for (MultipartFile image : images) {
+                String imageName = folderName + generateUniqueFileName(image);
+
+                ObjectMetadata metadata = new ObjectMetadata();
+                metadata.setContentLength(image.getSize());
+                metadata.setContentType(image.getContentType());
+                try {
+                    PutObjectRequest request = new PutObjectRequest(bucketName, imageName, image.getInputStream(), metadata);
+                    amazonS3.putObject(request);
+
+                    String imageUrl = amazonS3.getUrl(bucketName, imageName).toString();
+                    imageUrls.add(imageUrl);
+                } catch (IOException e) {
+                    throw new BadRequestException("Error uploading image");
+
+                }
+            }
+        }
+        return imageUrls;
+    }
+
+    private String generateUniqueFileName(MultipartFile image) {
+        return UUID.randomUUID().toString() + "-" + image.getOriginalFilename();
+    }
+
+    public ProductDTO createProductWithImages(Product product, MultipartFile[] images) {
+        try {
+            product = productRepository.save(product);
+        } catch (Exception e) {
+            if (e.getMessage().contains("Duplicate entry")) {
+                throw new BadRequestException("The product already exists, use another name");
+            } else {
+                e.printStackTrace();
+                throw new BadRequestException("Error creating product, please contact support.");
+            }
+        }
+
+        if(images != null && images.length > 0) {
+            try {
+                List<String> imageUrls = uploadImagesToS3(images, product.getId().toString());
+                product.setImages(imageUrls);
+                product = productRepository.save(product);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new BadRequestException("Error uploading images, please contact support.");
+            }
+        }
+        return productToProductDTO(product);
     }
 
     public ProductDTO updateProduct(Long id, UpdateProductDTO updateProductDTO) {
