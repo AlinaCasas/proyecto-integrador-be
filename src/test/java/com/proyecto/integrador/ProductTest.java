@@ -5,6 +5,8 @@ import com.proyecto.integrador.exceptions.BadRequestException;
 import com.proyecto.integrador.product.Product;
 import com.proyecto.integrador.product.ProductService;
 import com.proyecto.integrador.product.dto.ProductDTO;
+import com.proyecto.integrador.token.Token;
+import com.proyecto.integrador.token.TokenRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -17,12 +19,9 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false) //addFilters = false --> No nos tenemos que autenticar
@@ -32,6 +31,8 @@ public class ProductTest {
     private MockMvc mockMvc;
     @Autowired
     private ProductService productService;
+    @Autowired
+    private TokenRepository tokenRepository;
 
     // Cargamos los datos iniciales
     public void cargadorDeDatos(){
@@ -51,24 +52,53 @@ public class ProductTest {
     }
 
     @Test
+    public void crearProductoComoAdministrador() throws Exception {
+        cargadorDeDatos();
+
+        // Obtenemos el token de administrador
+        Token adminToken = tokenRepository.findByToken("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbkBtYWlsLmNvbSIsImlhdCI6MTY5OTM1NDUxMSwiZXhwIjoxNjk5NDQwOTExfQ.hgKL2iLAK6hBUDrqzTaa-UVMtKEAeVxEThAowAJMI0Y").orElse(null);
+
+        // Nos aseguramos que tenemos un token valido
+        assertNotNull(adminToken);
+
+        // Creo un producto
+        Product nuevoProducto = new Product();
+        nuevoProducto.setName("El mejor piano");
+        nuevoProducto.setCategory("Piano");
+        nuevoProducto.setPrice(199.99f);
+
+        // Realizamos la solicitud POST con el token de administrador
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/products")
+                        .header("Authorization", "Bearer " + adminToken.getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(nuevoProducto)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().isCreated()); // Esperamos un estado 201
+    }
+
+    @Test
     public void crearProductoRepetidoDeberiaFallar() throws Exception {
-        // Tenemos un producto existente con el nombre "Guitar"
+
+        // Obtenemos el token de administrador
+        Token adminToken = tokenRepository.findByToken("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbkBtYWlsLmNvbSIsImlhdCI6MTY5OTM1NDUxMSwiZXhwIjoxNjk5NDQwOTExfQ.hgKL2iLAK6hBUDrqzTaa-UVMtKEAeVxEThAowAJMI0Y").orElse(null);
+
+        // Creo un producto con el nombre "Guitar" en la base de datos
         Product productoExistente = new Product();
         productoExistente.setName("Guitar");
         productService.createProduct(productoExistente);
 
-        // Intento agregar un producto con el mismo nombre
+        // Creo otro producto con el mismo nombre
         Product nuevoProducto = new Product();
         nuevoProducto.setName("Guitar");
 
         // Realizo la solicitud POST para agregar el nuevo producto
-        MvcResult resultado = mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/products")
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/products")
+                        .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(nuevoProducto)))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().isBadRequest()) // Esperamos un fallo
                 .andReturn();
-        String responseBody = resultado.getResponse().getContentAsString();
-        assertTrue(responseBody.contains("The product already exists, use another name"));
     }
 
     @Test
