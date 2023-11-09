@@ -10,7 +10,6 @@ import org.springframework.context.annotation.PropertySource;
 import java.util.Properties;
 
 @Configuration
-@PropertySource("classpath:secrets.properties") // Especifica la ubicación del archivo secrets.properties
 public class EmailConfig {
 
     @Value("${mail.password}")
