@@ -18,7 +18,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
   Product findByName(String name);
 
-  @Query(value = "SELECT * FROM Product p " +
+  @Query(value = "SELECT * FROM product p " +
           "WHERE p.deleted_at IS NULL " +
           "AND (:id IS NULL OR p.id = :id) " +
           "AND (:name IS NULL OR p.name LIKE CONCAT('%', :name, '%')) " +
@@ -30,7 +30,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
           "AND (:priceMax IS NULL OR p.price <= :priceMax) " +
           "AND (:discount IS NULL OR p.discount >= :discount) " +
           "AND (:startDate IS NULL OR NOT EXISTS ( " +
-          "SELECT 1 FROM Reservations r WHERE r.product_id = p.id AND r.deleted_at IS NULL " +
+          "SELECT 1 FROM reservations r WHERE r.product_id = p.id AND r.deleted_at IS NULL " +
           "AND ((r.start_date BETWEEN :startDate AND :endDate) OR (r.end_date BETWEEN :startDate AND :endDate)))) " +
           "ORDER BY " +
           "CASE " +
@@ -54,7 +54,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
             "WHEN :order = 'desc' AND :sort = 'price' THEN p.price " +
             "WHEN :order = 'desc' AND :sort = 'discount' THEN p.discount " +
           "END DESC ",
-          countQuery = "SELECT * FROM Product p " +
+          countQuery = "SELECT * FROM product p " +
           "WHERE p.deleted_at IS NULL " +
           "AND (:id IS NULL OR p.id = :id) " +
           "AND (:name IS NULL OR p.name LIKE CONCAT('%', :name, '%')) " +
@@ -66,7 +66,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
           "AND (:priceMax IS NULL OR p.price <= :priceMax) " +
           "AND (:discount IS NULL OR p.discount >= :discount) " +
           "AND (:startDate IS NULL OR NOT EXISTS ( " +
-          "SELECT 1 FROM Reservations r WHERE r.product_id = p.id AND r.deleted_at IS NULL " +
+          "SELECT 1 FROM reservations r WHERE r.product_id = p.id AND r.deleted_at IS NULL " +
           "AND ((r.start_date BETWEEN :startDate AND :endDate) OR (r.end_date BETWEEN :startDate AND :endDate)))) ",
           nativeQuery = true)
   Page<Product> findAllWithFilters(@Param("id") Long id,
