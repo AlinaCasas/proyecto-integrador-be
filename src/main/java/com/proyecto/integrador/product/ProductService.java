@@ -194,6 +194,7 @@ public class ProductService {
 
     private Product trySaveProduct(Product product) {
         try {
+            if (product.getImages() == null) product.setImages(new ArrayList<>());
             return productRepository.save(product);
         } catch (DataIntegrityViolationException e) {
             if (e.getMessage().contains("Duplicate entry")) {
