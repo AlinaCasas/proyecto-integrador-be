@@ -44,6 +44,7 @@ public class SecurityConfiguration {
                                 .permitAll()
                                 .requestMatchers(GET, "/api/v1/products/**").permitAll()
                                 .requestMatchers(POST, "/api/v1/products/**").hasAnyRole(ADMIN.name())
+                                .requestMatchers(POST, "/api/v1/products/images/**").hasAnyRole(ADMIN.name())
                                 .requestMatchers(PUT, "/api/v1/products/**").hasAnyRole(ADMIN.name())
                                 .requestMatchers(DELETE, "/api/v1/products/**").hasAnyRole(ADMIN.name())
                                 .requestMatchers("/api/v1/reservations/admin/**").hasAnyRole(ADMIN.name())

@@ -5,16 +5,22 @@ import com.proyecto.integrador.product.dto.UpdateProductDTO;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.dialect.MyISAMStorageEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.validation.Errors;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 @RestController
@@ -53,13 +59,32 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<ProductDTO> create(@RequestBody(required = false) @Valid Product product) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.createProduct(product));
+    public ResponseEntity<?> create(
+            @RequestParam(value = "imagesFiles", required = false) MultipartFile[] imagesFiles,
+            @Valid @ModelAttribute Product product
+    ) {
+        if (imagesFiles != null) {
+            HashMap<String, String> imagesError = validateImages(imagesFiles);
+            if (imagesError != null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(imagesError);
+            }
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.createProduct(product, imagesFiles));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProductDTO> update(@PathVariable(value = "id", required = false) Long id, @RequestBody @Valid UpdateProductDTO updateProductDto, Errors errors) {
-        return ResponseEntity.status(HttpStatus.OK).body(service.updateProduct(id, updateProductDto));
+    public ResponseEntity<?> update(
+            @PathVariable(value = "id", required = false) Long id,
+            @RequestParam(value = "imagesFiles", required = false) MultipartFile[] imagesFiles,
+            @Valid @ModelAttribute UpdateProductDTO updateProductDto
+    ) {
+        if (imagesFiles != null) {
+            HashMap<String, String> imagesError = validateImages(imagesFiles);
+            if (imagesError != null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(imagesError);
+            }
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(service.updateProduct(id, updateProductDto, imagesFiles));
     }
 
     @DeleteMapping("/{id}")
@@ -67,5 +92,28 @@ public class ProductController {
     public void delete(@PathVariable("id") Long id) {
         service.deleteProduct(id);
     }
-}
 
+    private HashMap<String, String> validateImages(MultipartFile[] imagesFiles) {
+
+        HashMap<String, String> errors = new HashMap<>();
+        if (imagesFiles.length == 0) {
+            errors.put("error", "At least one image is required");
+            return errors;
+        }
+        if (imagesFiles.length > 7) {
+            errors.put("error", "Maximum 7 images are allowed");
+            return errors;
+        }
+        for (MultipartFile image : imagesFiles) {
+            if (image.getSize() > 1048576) { // 1024 * 1024 = 1MB
+                errors.put("error", "Maximum image size is 1MB");
+                return errors;
+            }
+            if (!Arrays.asList("image/jpeg", "image/png", "image/webp").contains(image.getContentType())) {
+                errors.put("error", "Only JPG, PNG and WEBP images are allowed");
+                return errors;
+            }
+        }
+        return null;
+    }
+}
