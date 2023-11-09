@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 @RestController
@@ -58,95 +59,32 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<ProductDTO> create(@RequestBody(required = false) @Valid Product product) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.createProduct(product));
-    }
-
-//    @PostMapping("/images")
-//    public ResponseEntity<?> createWithImages(
-//            @RequestParam(value = "images", required = false) MultipartFile[] images,
-//            @RequestParam(value = "name", required = true) @Min(3) @Max(50) @NotNull String name,
-//            @RequestParam(value = "category", required = true) String category,
-//            @RequestParam(value = "brand", required = false) String brand,
-//            @RequestParam(value = "model", required = false) String model,
-//            @RequestParam(value = "description", required = false) String description,
-//            @RequestParam(value = "price", required = true) Float price,
-//            @RequestParam(value = "discount", required = false) Integer discount
-//    ) {
-//        if (images != null) {
-//            if (images.length == 0) {
-//                return ResponseEntity
-//                        .status(HttpStatus.BAD_REQUEST)
-//                        .body("You must send at least one image");
-//            }
-//            if (images.length > 7) {
-//                return ResponseEntity
-//                        .status(HttpStatus.BAD_REQUEST)
-//                        .body("Cannot upload more than 7 images");
-//            }
-//            for (MultipartFile image : images) {
-//                if (image.getSize() > 1048576) { // 1024 * 1024 = 1MB
-//                    return ResponseEntity
-//                            .status(HttpStatus.BAD_REQUEST)
-//                            .body("Each image must be less than 1MB in size.");
-//                }
-//                if (!Arrays.asList("image/jpeg", "image/png").contains(image.getContentType())) {
-//                    return ResponseEntity
-//                            .status(HttpStatus.BAD_REQUEST)
-//                            .body("Invalid image format. Only JPEG and PNG are allowed.");
-//                }
-//            }
-//        }
-//
-//        Product product = Product.builder()
-//                .name(name)
-//                .category(category)
-//                .brand(brand)
-//                .model(model)
-//                .description(description)
-//                .price(price)
-//                .discount(discount)
-//                .build();
-//        return ResponseEntity.status(HttpStatus.CREATED).body(service.createProductWithImages(product, images));
-//    }
-
-
-    @PostMapping("/images")
-    public ResponseEntity<?> createWithImages(
+    public ResponseEntity<?> create(
             @RequestParam(value = "imagesFiles", required = false) MultipartFile[] imagesFiles,
             @Valid @ModelAttribute Product product
     ) {
         if (imagesFiles != null) {
-            if (imagesFiles.length == 0) {
-                return ResponseEntity
-                        .status(HttpStatus.BAD_REQUEST)
-                        .body("You must send at least one image");
-            }
-            if (imagesFiles.length > 7) {
-                return ResponseEntity
-                        .status(HttpStatus.BAD_REQUEST)
-                        .body("Cannot upload more than 7 images");
-            }
-            for (MultipartFile image : imagesFiles) {
-                if (image.getSize() > 1048576) { // 1024 * 1024 = 1MB
-                    return ResponseEntity
-                            .status(HttpStatus.BAD_REQUEST)
-                            .body("Each image must be less than 1MB in size.");
-                }
-                if (!Arrays.asList("image/jpeg", "image/png").contains(image.getContentType())) {
-                    return ResponseEntity
-                            .status(HttpStatus.BAD_REQUEST)
-                            .body("Invalid image format. Only JPEG and PNG are allowed.");
-                }
+            HashMap<String, String> imagesError = validateImages(imagesFiles);
+            if (imagesError != null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(imagesError);
             }
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.createProductWithImages(product, imagesFiles));
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.createProduct(product, imagesFiles));
     }
 
-
     @PutMapping("/{id}")
-    public ResponseEntity<ProductDTO> update(@PathVariable(value = "id", required = false) Long id, @RequestBody @Valid UpdateProductDTO updateProductDto, Errors errors) {
-        return ResponseEntity.status(HttpStatus.OK).body(service.updateProduct(id, updateProductDto));
+    public ResponseEntity<?> update(
+            @PathVariable(value = "id", required = false) Long id,
+            @RequestParam(value = "imagesFiles", required = false) MultipartFile[] imagesFiles,
+            @Valid @ModelAttribute UpdateProductDTO updateProductDto
+    ) {
+        if (imagesFiles != null) {
+            HashMap<String, String> imagesError = validateImages(imagesFiles);
+            if (imagesError != null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(imagesError);
+            }
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(service.updateProduct(id, updateProductDto, imagesFiles));
     }
 
     @DeleteMapping("/{id}")
@@ -154,5 +92,28 @@ public class ProductController {
     public void delete(@PathVariable("id") Long id) {
         service.deleteProduct(id);
     }
-}
 
+    private HashMap<String, String> validateImages(MultipartFile[] imagesFiles) {
+
+        HashMap<String, String> errors = new HashMap<>();
+        if (imagesFiles.length == 0) {
+            errors.put("error", "At least one image is required");
+            return errors;
+        }
+        if (imagesFiles.length > 7) {
+            errors.put("error", "Maximum 7 images are allowed");
+            return errors;
+        }
+        for (MultipartFile image : imagesFiles) {
+            if (image.getSize() > 1048576) { // 1024 * 1024 = 1MB
+                errors.put("error", "Maximum image size is 1MB");
+                return errors;
+            }
+            if (!Arrays.asList("image/jpeg", "image/png", "image/webp").contains(image.getContentType())) {
+                errors.put("error", "Only JPG, PNG and WEBP images are allowed");
+                return errors;
+            }
+        }
+        return null;
+    }
+}

@@ -16,7 +16,7 @@ import java.util.Optional;
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
   List<ProductDTO> findAllProductsBy();
 
-  Optional<Product> findByName(String name);
+  Product findByName(String name);
 
   @Query(value = "SELECT * FROM Product p " +
           "WHERE p.deleted_at IS NULL " +
