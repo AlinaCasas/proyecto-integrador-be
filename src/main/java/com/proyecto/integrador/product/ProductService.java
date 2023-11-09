@@ -1,5 +1,9 @@
 package com.proyecto.integrador.product;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.proyecto.integrador.exceptions.BadRequestException;
 import com.proyecto.integrador.product.dto.ProductDTO;
 import com.proyecto.integrador.product.dto.ProductReservationDTO;
@@ -8,15 +12,18 @@ import com.proyecto.integrador.reservation.Reservation;
 import com.proyecto.integrador.reservation.ReservationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Date;
-import java.util.List;
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +35,135 @@ public class ProductService {
     @Autowired
     private ReservationRepository reservationRepository;
 
+    @Autowired
+    private AmazonS3 amazonS3;
+
+    public Page<ProductDTO> findProductsUsingSQL(Long id, String name, String category, String brand, String model, String description, Float priceMin, Float priceMax, Integer discount, int page, int limit, String sort, String order, Long startDate, Long endDate) {
+        if (startDate != null && endDate == null || startDate == null && endDate != null) {
+            throw new BadRequestException("If you want to filter by date, you must send both start and end date");
+        }
+        if (startDate != null && startDate > endDate) {
+            throw new BadRequestException("The start date must be less than the end date");
+        }
+        page = page == 0 ? 0 : page - 1;
+        Pageable pageable = PageRequest.of(page, limit);
+
+        Page<Product> productPage = productRepository.findAllWithFilters(
+                id,
+                name,
+                category,
+                brand,
+                model,
+                description,
+                priceMin,
+                priceMax,
+                discount,
+                startDate != null ? new Date(startDate * 1000) : null,
+                endDate != null ? new Date(endDate * 1000) : null,
+                sort,
+                order,
+                pageable
+        );
+        return productPage.map(this::productToProductDTO);
+    }
+
+    public ProductDTO findProductById(Long id) {
+        Product product = productRepository.findById(id).orElseThrow(() -> new BadRequestException("Product not found"));
+        if (product.getDeletedAt() != null) throw new BadRequestException("The product is deleted, please contact support.");
+
+        List<Reservation> reservationList = reservationRepository.findAllActiveReservationsByProductId(id);
+        List<ProductReservationDTO> reservations = reservationList.stream().map(this::reservationToProductReservationDTO).toList();
+        return new ProductDTO(product.getId(), product.getName(), product.getCategory(), product.getBrand(), product.getModel(), product.getDescription(), product.getPrice(), product.getImages(), product.getDiscount(), reservations);
+    }
+
+
+
+    public ProductDTO createProduct(Product product, MultipartFile[] imagesFiles) {
+        if (product.getImages() != null && product.getImages().size() + imagesFiles.length > 7) {
+            throw new BadRequestException("Product can't have more than 7 images");
+        }
+        product.setDiscount(Optional.ofNullable(product.getDiscount()).orElse(0));
+        Product savedProduct = trySaveProduct(product);
+
+        if (imagesFiles != null && imagesFiles.length > 0) {
+            List<String> imageUrls = uploadImages(imagesFiles, savedProduct.getId().toString());
+            List<String> currentImages = savedProduct.getImages();
+            currentImages.addAll(imageUrls);
+            savedProduct.setImages(currentImages);
+            savedProduct = productRepository.save(savedProduct);
+        }
+        return productToProductDTO(savedProduct);
+    }
+
+    public ProductDTO updateProduct(Long id, UpdateProductDTO updateProductDTO, MultipartFile[] imagesFiles) {
+
+        String name = updateProductDTO.getName();
+        String category = updateProductDTO.getCategory();
+        String brand = updateProductDTO.getBrand();
+        String model = updateProductDTO.getModel();
+        String description = updateProductDTO.getDescription();
+        Float price = updateProductDTO.getPrice();
+        List<String> images = updateProductDTO.getImages();
+        Integer discount = updateProductDTO.getDiscount();
+
+        if (name == null && category == null && brand == null && model == null && description == null && price == null && images == null && discount == null && imagesFiles == null) throw new BadRequestException("No data to update");
+
+        Product product = productRepository.findById(id).orElseThrow(() -> new BadRequestException("Product not found"));
+
+        Product productByName = productRepository.findByName(name);
+
+        if (productByName != null && !productByName.getId().equals(id)) throw new BadRequestException("The product already exists, use another name");
+
+        if (product.getDeletedAt() != null) throw new BadRequestException("The product is deleted, please contact support.");
+
+        if (name != null) product.setName(updateProductDTO.getName());
+        if (category != null) product.setCategory(updateProductDTO.getCategory());
+        if (brand != null) product.setBrand(updateProductDTO.getBrand());
+        if (model != null) product.setModel(updateProductDTO.getModel());
+        if (description != null) product.setDescription(updateProductDTO.getDescription());
+        if (price != null) product.setPrice(updateProductDTO.getPrice());
+        if (discount != null) product.setDiscount(updateProductDTO.getDiscount());
+
+        List<String> imagesToDelete = new ArrayList<>();
+        if (images != null) {
+            List<String> currentImages = product.getImages();
+            if (currentImages != null && !currentImages.isEmpty()) {
+                for (String currentImage : currentImages) {
+                    if (!images.contains(currentImage)) {
+                        imagesToDelete.add(currentImage);
+                    }
+                }
+            }
+            product.setImages(images);
+        }
+
+        if (imagesFiles != null && imagesFiles.length > 0) {
+            List<String> currentImages = product.getImages();
+            if (currentImages != null && currentImages.size() + imagesFiles.length > 7) {
+                throw new BadRequestException("Product can't have more than 7 images");
+            }
+
+            List<String> imageUrls = uploadImages(imagesFiles, product.getId().toString());
+            currentImages.addAll(imageUrls);
+            product.setImages(currentImages);
+        }
+
+        Product saveProduct = productRepository.save(product);
+
+        if (!imagesToDelete.isEmpty()) {
+            deleteImages(imagesToDelete);
+        }
+
+        List<ProductReservationDTO> reservations = saveProduct.getReservations().stream().map(this::reservationToProductReservationDTO).toList();
+        return new ProductDTO(saveProduct.getId(), saveProduct.getName(), saveProduct.getCategory(), saveProduct.getBrand(), saveProduct.getModel(), saveProduct.getDescription(), saveProduct.getPrice(), saveProduct.getImages(), saveProduct.getDiscount(), reservations);
+    }
+
+    public void deleteProduct(Long id){
+        Product product = productRepository.findById(id).orElseThrow(() -> new BadRequestException("Product not found"));
+        product.setDeletedAt(new Date());
+        productRepository.save(product);
+    }
+
     private ProductReservationDTO reservationToProductReservationDTO (Reservation reservation) {
         return ProductReservationDTO.builder()
                 .id(reservation.getId())
@@ -35,8 +171,13 @@ public class ProductService {
                 .endDate(reservation.getEndDate().getTime())
                 .build();
     }
+
     private ProductDTO productToProductDTO(Product product) {
-        List<ProductReservationDTO> reservations = product.getReservations().stream().map(this::reservationToProductReservationDTO).toList();
+        List<ProductReservationDTO> reservations = new ArrayList<>();
+        if (product.getReservations() != null && !product.getReservations().isEmpty()) {
+            reservations = product.getReservations().stream().map(this::reservationToProductReservationDTO).toList();
+        }
+
         return ProductDTO.builder()
                 .id(product.getId())
                 .name(product.getName())
@@ -50,76 +191,69 @@ public class ProductService {
                 .reservations(reservations)
                 .build();
     }
-    public Page<ProductDTO> findProducts(Long id, String name, String category, String brand, String model, String description, Float priceMin, Float priceMax, int page, int limit, String sort, String direction) {
-        Specification<Product> spec = Specification.where(ProductSpecification.hasId(id))
-                .and(ProductSpecification.hasName(name))
-                .and(ProductSpecification.hasCategory(category))
-                .and(ProductSpecification.hasBrand(brand))
-                .and(ProductSpecification.hasModel(model))
-                .and(ProductSpecification.hasDescription(description))
-                .and(ProductSpecification.priceGreaterThanOrEqualTo(priceMin))
-                .and(ProductSpecification.priceLessThanOrEqualTo(priceMax));
 
-        Sort.Direction sortOrder = "desc".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
-        page = page == 0 ? 0 : page - 1;
-        Pageable pageable = PageRequest.of(page, limit, Sort.by(sortOrder, sort));
-        Page<Product> productPage = productRepository.findAll(spec, pageable);
-        return productPage.map(this::productToProductDTO);
-    }
-
-    public ProductDTO findProductById(Long id) {
-        Product product = productRepository.findById(id).orElseThrow(() -> new BadRequestException("Product not found"));
-        if (product.getDeletedAt() != null) throw new BadRequestException("The product is deleted, please contact support.");
-
-        List<Reservation> reservationList = reservationRepository.findAllActiveReservationsByProductId(id);
-        List<ProductReservationDTO> reservations = reservationList.stream().map(this::reservationToProductReservationDTO).toList();
-        return new ProductDTO(product.getId(), product.getName(), product.getCategory(), product.getBrand(), product.getModel(), product.getDescription(), product.getPrice(), product.getImages(), product.getDiscount(), reservations);
-    }
-
-    public ProductDTO createProduct(Product product) {
+    private Product trySaveProduct(Product product) {
         try {
-            if (product.getDiscount() == null) product.setDiscount(0);
-            Product saveProduct = productRepository.save(product);
-            return new ProductDTO(saveProduct.getId(), saveProduct.getName(), saveProduct.getCategory(), saveProduct.getBrand(), saveProduct.getModel(), saveProduct.getDescription(), saveProduct.getPrice(), saveProduct.getImages(), saveProduct.getDiscount(), null);
+            return productRepository.save(product);
+        } catch (DataIntegrityViolationException e) {
+            if (e.getMessage().contains("Duplicate entry")) {
+                throw new BadRequestException("The product already exists, use another name");
+            } else {
+                e.printStackTrace();
+                throw new BadRequestException("Error creating product, please contact support.");
+            }
         } catch (Exception e) {
-            throw new BadRequestException("The product already exists, use another name");
+            e.printStackTrace();
+            throw new BadRequestException("Unexpected error, please contact support.");
         }
     }
 
-    public ProductDTO updateProduct(Long id, UpdateProductDTO updateProductDTO) {
-        String instrument = updateProductDTO.getName();
-        String category = updateProductDTO.getCategory();
-        String brand = updateProductDTO.getBrand();
-        String model = updateProductDTO.getModel();
-        String description = updateProductDTO.getDescription();
-        Float price = updateProductDTO.getPrice();
-        List<String> images = updateProductDTO.getImages();
-        Integer discount = updateProductDTO.getDiscount();
+    private List<String> uploadImages(MultipartFile[] images, String productId) {
+            if (images != null) {
+                List<String> imageUrls = new ArrayList<>();
+                String bucketName = "1023c07-grupo5";
+                String folderName = "images/products/" + productId + "/";
+                for (MultipartFile image : images) {
+                    String imageName = folderName + generateUniqueFileName(image);
 
-        if (instrument == null && category == null && brand == null && model == null && description == null && price == null && images == null && discount == null) throw new BadRequestException("No data to update");
+                    ObjectMetadata metadata = new ObjectMetadata();
+                    metadata.setContentLength(image.getSize());
+                    metadata.setContentType(image.getContentType());
+                    try {
+                        PutObjectRequest request = new PutObjectRequest(bucketName, imageName, image.getInputStream(), metadata);
+                        amazonS3.putObject(request);
 
-        Product product = productRepository.findById(id).orElseThrow(() -> new BadRequestException("Product not found"));
+                        String imageUrl = amazonS3.getUrl(bucketName, imageName).toString();
+                        imageUrls.add(imageUrl);
+                    } catch (IOException e) {
+                        throw new BadRequestException("Error uploading image");
 
-        if (product.getDeletedAt() != null) throw new BadRequestException("The product is deleted, please contact support.");
+                    }
+                }
+                return imageUrls;
+            } else {
+                return null;
+            }
+        }
 
-        if (instrument != null) product.setName(updateProductDTO.getName());
-        if (category != null) product.setCategory(updateProductDTO.getCategory());
-        if (brand != null) product.setBrand(updateProductDTO.getBrand());
-        if (model != null) product.setModel(updateProductDTO.getModel());
-        if (description != null) product.setDescription(updateProductDTO.getDescription());
-        if (price != null) product.setPrice(updateProductDTO.getPrice());
-        if (images != null) product.setImages(updateProductDTO.getImages());
-        if (discount != null) product.setDiscount(updateProductDTO.getDiscount());
-
-        Product saveProduct = productRepository.save(product);
-
-        List<ProductReservationDTO> reservations = saveProduct.getReservations().stream().map(this::reservationToProductReservationDTO).toList();
-        return new ProductDTO(saveProduct.getId(), saveProduct.getName(), saveProduct.getCategory(), saveProduct.getBrand(), saveProduct.getModel(), saveProduct.getDescription(), saveProduct.getPrice(), saveProduct.getImages(), saveProduct.getDiscount(), reservations);
+    private boolean deleteImages(List<String> images) {
+        if (images != null && !images.isEmpty()) {
+            String bucketName = "1023c07-grupo5";
+            List<String> imagesToDelete = new ArrayList<>();
+            for (String image : images) {
+                String[] parts = image.split("amazonaws.com/");
+                String imageName = parts[parts.length - 1];
+                imagesToDelete.add(imageName);
+            }
+            DeleteObjectsRequest deleteObjectsRequest = new DeleteObjectsRequest(bucketName).withKeys(imagesToDelete.toArray(new String[0]));
+            amazonS3.deleteObjects(deleteObjectsRequest);
+            return true;
+        } else {
+            return false;
+        }
     }
 
-    public void deleteProduct(Long id){
-        Product product = productRepository.findById(id).orElseThrow(() -> new BadRequestException("Product not found"));
-        product.setDeletedAt(new Date());
-        productRepository.save(product);
+    private String generateUniqueFileName(MultipartFile image) {
+        return UUID.randomUUID().toString() + "-" + image.getOriginalFilename();
     }
 }

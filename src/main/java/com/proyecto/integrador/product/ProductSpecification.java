@@ -3,6 +3,8 @@ package com.proyecto.integrador.product;
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.*;
 
+import java.util.List;
+
 public class ProductSpecification {
 
     public static Specification<Product> hasId(Long id) {
@@ -51,4 +53,21 @@ public class ProductSpecification {
                 priceMax == null ? criteriaBuilder.conjunction() :
                         criteriaBuilder.lessThanOrEqualTo(root.get("price"), priceMax);
     }
+
+    public static Specification<Product> discountGreaterThanOrEqualTo(Integer discount) {
+        return (root, query, criteriaBuilder) ->
+                discount == null ? criteriaBuilder.conjunction() :
+                        criteriaBuilder.greaterThanOrEqualTo(root.get("discount"), discount);
+    }
+
+    public static Specification<Product> hasIdIn(List<Long> idList) {
+        return (root, query, criteriaBuilder) -> {
+            if (idList == null || idList.isEmpty()) {
+                return criteriaBuilder.conjunction();
+            } else {
+                return root.get("id").in(idList);
+            }
+        };
+    }
+
 }
