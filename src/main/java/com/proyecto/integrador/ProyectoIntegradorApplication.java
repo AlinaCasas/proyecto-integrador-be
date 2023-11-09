@@ -30,8 +30,8 @@ public class ProyectoIntegradorApplication {
 			try {
 				var admin = RegisterRequest.builder()
 						.firstname("Admin")
-						.lastname("Admin")
-						.email("admin@mail.com")
+						.lastname("Mica")
+						.email("mica@mail.com")
 						.password("password")
 						.role(ADMIN)
 						.build();
@@ -40,7 +40,7 @@ public class ProyectoIntegradorApplication {
 				try {
 					System.out.println("Admin already registered, try to login");
 					AuthenticationRequest admin = AuthenticationRequest.builder()
-							.email("admin@mail.com")
+							.email("mica@mail.com")
 							.password("password")
 							.build();
 					System.out.println("Admin token: " + service.login(admin).getAccessToken());

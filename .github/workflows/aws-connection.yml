@@ -1,0 +1,57 @@
+name: Conexión a EC2
+
+on:
+  push:
+    branches:
+      - amazon-deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código de backend
+        uses: actions/checkout@v2
+      
+      - name: Set up de Java
+        uses: actions/setup-java@v2
+        with:
+          java-version: 17 
+          distribution: 'adopt'
+
+      - name: Build con Maven
+        run: mvn clean package
+        working-directory: ./
+
+      - name: Iniciar el agente SSH
+        run: |
+          eval $(ssh-agent -s)
+          mkdir -p $HOME/.ssh
+          echo "${{ secrets.PRIVATE_KEY }}" | base64 --decode > $HOME/.ssh/1023c07-grupo5.pem
+          chmod 600 $HOME/.ssh/1023c07-grupo5.pem
+          ssh-add $HOME/.ssh/1023c07-grupo5.pem
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+
+      - name: Agregar clave del host al archivo known_hosts
+        run: |
+          mkdir -p $HOME/.ssh
+          ssh-keyscan 174.129.92.139 >> $HOME/.ssh/known_hosts
+
+      - name: Copia de .jar a Amazon EC2
+        run: |
+          scp -i $HOME/.ssh/1023c07-grupo5.pem ./target/security-0.0.1-SNAPSHOT.jar ec2-user@174.129.92.139:/var/www
+
+      - name: Copia de Dockerfile a Amazon EC2
+        run: |
+          scp -i $HOME/.ssh/1023c07-grupo5.pem ./Dockerfile ec2-user@174.129.92.139:/var/www
+
+      - name: Detener Docker existente si hay
+        run: |
+          ssh -i $HOME/.ssh/1023c07-grupo5.pem ec2-user@174.129.92.139 "sudo docker ps -a -q | xargs -r docker stop || true"
+          ssh -i $HOME/.ssh/1023c07-grupo5.pem ec2-user@174.129.92.139 "sudo docker ps -a -q | xargs -r docker rm || true"
+          
+      - name: Build y Ejecución de Docker
+        run: |
+          ssh -i $HOME/.ssh/1023c07-grupo5.pem ec2-user@174.129.92.139 "sudo docker build -t backend-app /var/www"
+          ssh -i $HOME/.ssh/1023c07-grupo5.pem ec2-user@174.129.92.139 "sudo docker run -e DB_URL=${{ secrets.DB_URL }} -e DB_USERNAME=${{ secrets.DB_USERNAME }} -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} -e MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }} -d -p 8001:8080 backend-app"
