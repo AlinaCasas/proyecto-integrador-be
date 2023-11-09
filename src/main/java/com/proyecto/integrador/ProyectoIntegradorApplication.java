@@ -3,10 +3,13 @@ package com.proyecto.integrador;
 import com.proyecto.integrador.auth.AuthenticationRequest;
 import com.proyecto.integrador.auth.AuthenticationService;
 import com.proyecto.integrador.auth.RegisterRequest;
+
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 import static com.proyecto.integrador.user.Role.ADMIN;
