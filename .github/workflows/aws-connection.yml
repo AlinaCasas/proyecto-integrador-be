@@ -54,4 +54,4 @@ jobs:
       - name: Build y Ejecución de Docker
         run: |
           ssh -i $HOME/.ssh/1023c07-grupo5.pem ec2-user@174.129.92.139 "sudo docker build -t backend-app /var/www"
-          ssh -i $HOME/.ssh/1023c07-grupo5.pem ec2-user@174.129.92.139 "sudo docker run -d -p 8001:8080 backend-app"
+          ssh -i $HOME/.ssh/1023c07-grupo5.pem ec2-user@174.129.92.139 "sudo docker run -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} -e MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }} -d -p 8001:8080 backend-app"
