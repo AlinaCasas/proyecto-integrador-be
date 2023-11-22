@@ -4,12 +4,15 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.DeleteObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.proyecto.integrador.category.Category;
+import com.proyecto.integrador.category.CategoryRepository;
 import com.proyecto.integrador.exceptions.BadRequestException;
 import com.proyecto.integrador.product.dto.ProductDTO;
 import com.proyecto.integrador.product.dto.ProductReservationDTO;
 import com.proyecto.integrador.product.dto.UpdateProductDTO;
 import com.proyecto.integrador.reservation.Reservation;
 import com.proyecto.integrador.reservation.ReservationRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -34,6 +37,8 @@ public class ProductService {
 
     @Autowired
     private ReservationRepository reservationRepository;
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     @Autowired
     private AmazonS3 amazonS3;
@@ -73,7 +78,7 @@ public class ProductService {
 
         List<Reservation> reservationList = reservationRepository.findAllActiveReservationsByProductId(id);
         List<ProductReservationDTO> reservations = reservationList.stream().map(this::reservationToProductReservationDTO).toList();
-        return new ProductDTO(product.getId(), product.getName(), product.getCategory(), product.getBrand(), product.getModel(), product.getDescription(), product.getPrice(), product.getImages(), product.getDiscount(), reservations);
+        return new ProductDTO(product.getId(), product.getName(), product.getCategory().getName(), product.getBrand(), product.getModel(), product.getDescription(), product.getPrice(), product.getImages(), product.getDiscount(), reservations);
     }
 
 
@@ -117,7 +122,16 @@ public class ProductService {
         if (product.getDeletedAt() != null) throw new BadRequestException("The product is deleted, please contact support.");
 
         if (name != null) product.setName(updateProductDTO.getName());
-        if (category != null) product.setCategory(updateProductDTO.getCategory());
+        if (updateProductDTO.getCategory() != null) {
+            String categoryName = updateProductDTO.getCategory();
+            Category foundCategory = categoryRepository.findByName(categoryName);
+
+            if (foundCategory == null) {
+                throw new EntityNotFoundException("Category not found with name: " + categoryName);
+            }
+
+            product.setCategory(foundCategory);
+        }
         if (brand != null) product.setBrand(updateProductDTO.getBrand());
         if (model != null) product.setModel(updateProductDTO.getModel());
         if (description != null) product.setDescription(updateProductDTO.getDescription());
@@ -155,7 +169,7 @@ public class ProductService {
         }
 
         List<ProductReservationDTO> reservations = saveProduct.getReservations().stream().map(this::reservationToProductReservationDTO).toList();
-        return new ProductDTO(saveProduct.getId(), saveProduct.getName(), saveProduct.getCategory(), saveProduct.getBrand(), saveProduct.getModel(), saveProduct.getDescription(), saveProduct.getPrice(), saveProduct.getImages(), saveProduct.getDiscount(), reservations);
+        return new ProductDTO(saveProduct.getId(), saveProduct.getName(), saveProduct.getCategory().getName(), saveProduct.getBrand(), saveProduct.getModel(), saveProduct.getDescription(), saveProduct.getPrice(), saveProduct.getImages(), saveProduct.getDiscount(), reservations);
     }
 
     public void deleteProduct(Long id){
@@ -181,7 +195,7 @@ public class ProductService {
         return ProductDTO.builder()
                 .id(product.getId())
                 .name(product.getName())
-                .category(product.getCategory())
+                .category(product.getCategory().getName())
                 .brand(product.getBrand())
                 .model(product.getModel())
                 .description(product.getDescription())

@@ -1,4 +1,5 @@
 package com.proyecto.integrador.category;
+import com.proyecto.integrador.category.dto.CategoryDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,8 +24,8 @@ public class CategoryController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public Category createCategory(@RequestBody Category category) {
-        return categoryService.createCategory(category);
+    public Category createCategory(@RequestBody CategoryDTO categoryDTO) {
+        return categoryService.createCategory(categoryDTO);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -33,18 +34,12 @@ public class CategoryController {
             @PathVariable String name,
             @RequestParam String description
     ) {
-        // Se debería implementar la lógica de autorización aquí
-        // Por ejemplo, verificar si el usuario actual tiene roles de administrador
-        // y si no, lanzar una excepción de acceso no autorizado
         return categoryService.updateCategory(name, description);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{name}")
     public void softDeleteCategory(@PathVariable String name) {
-        // Se debería implementar la lógica de autorización aquí
-        // Por ejemplo, verificar si el usuario actual tiene roles de administrador
-        // y si no, lanzar una excepción de acceso no autorizado
         categoryService.softDeleteCategory(name);
     }
 }
