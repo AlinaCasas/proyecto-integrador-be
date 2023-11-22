@@ -1,6 +1,7 @@
 package com.proyecto.integrador.product;
 
 import com.proyecto.integrador.auditing.Auditable;
+import com.proyecto.integrador.category.Category;
 import com.proyecto.integrador.reservation.Reservation;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -31,7 +32,9 @@ public class Product extends Auditable {
 
   @Column(nullable = false)
   @NotEmpty(message = "Category is required")
-  private String category;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "category_id")
+  private Category category;
 
   @Column(nullable = true)
   @Size(min = 3, max = 50, message = "Brand should be between 3 and 50 characters")
