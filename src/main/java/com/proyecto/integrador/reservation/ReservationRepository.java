@@ -20,4 +20,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
   @Query("SELECT r FROM Reservation r WHERE r.product.id = :productId AND r.deletedAt IS NULL")
   List<Reservation> findAllActiveReservationsByProductId(@Param("productId") Long productId);
 
+    @Query("SELECT r FROM Reservation r WHERE r.user.id = :userId AND r.product.id = :productId AND r.deletedAt IS NULL")
+    Reservation findReservationByUserIdAndProductId(@Param("userId") Integer userId, @Param("productId") Long productId);
 }

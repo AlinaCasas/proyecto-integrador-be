@@ -2,6 +2,7 @@ package com.proyecto.integrador.user;
 
 import com.proyecto.integrador.auditing.Auditable;
 import com.proyecto.integrador.reservation.Reservation;
+import com.proyecto.integrador.review.Review;
 import com.proyecto.integrador.token.Token;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -44,6 +45,9 @@ public class User extends Auditable implements UserDetails {
 
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private Set<Reservation> reservations;
+
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private Set<Review> reviews;
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {

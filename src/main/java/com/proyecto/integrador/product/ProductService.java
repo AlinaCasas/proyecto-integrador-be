@@ -48,6 +48,8 @@ public class ProductService {
         page = page == 0 ? 0 : page - 1;
         Pageable pageable = PageRequest.of(page, limit);
 
+        // TODO add rating filter and order by rating
+
         Page<Product> productPage = productRepository.findAllWithFilters(
                 id,
                 name,
@@ -73,7 +75,7 @@ public class ProductService {
 
         List<Reservation> reservationList = reservationRepository.findAllActiveReservationsByProductId(id);
         List<ProductReservationDTO> reservations = reservationList.stream().map(this::reservationToProductReservationDTO).toList();
-        return new ProductDTO(product.getId(), product.getName(), product.getCategory(), product.getBrand(), product.getModel(), product.getDescription(), product.getPrice(), product.getImages(), product.getDiscount(), reservations);
+        return new ProductDTO(product.getId(), product.getName(), product.getCategory(), product.getBrand(), product.getModel(), product.getDescription(), product.getPrice(), product.getRating(), product.getRatingCount(), product.getImages(), product.getDiscount(), reservations);
     }
 
 
@@ -155,7 +157,7 @@ public class ProductService {
         }
 
         List<ProductReservationDTO> reservations = saveProduct.getReservations().stream().map(this::reservationToProductReservationDTO).toList();
-        return new ProductDTO(saveProduct.getId(), saveProduct.getName(), saveProduct.getCategory(), saveProduct.getBrand(), saveProduct.getModel(), saveProduct.getDescription(), saveProduct.getPrice(), saveProduct.getImages(), saveProduct.getDiscount(), reservations);
+        return new ProductDTO(saveProduct.getId(), saveProduct.getName(), saveProduct.getCategory(), saveProduct.getBrand(), saveProduct.getModel(), saveProduct.getDescription(), saveProduct.getPrice(), saveProduct.getRating(), saveProduct.getRatingCount(), saveProduct.getImages(), saveProduct.getDiscount(), reservations);
     }
 
     public void deleteProduct(Long id){
@@ -186,6 +188,8 @@ public class ProductService {
                 .model(product.getModel())
                 .description(product.getDescription())
                 .price(product.getPrice())
+                .rating(product.getRating())
+                .ratingCount(product.getRatingCount())
                 .images(product.getImages())
                 .discount(product.getDiscount())
                 .reservations(reservations)
