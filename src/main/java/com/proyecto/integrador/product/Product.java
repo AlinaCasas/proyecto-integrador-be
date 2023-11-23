@@ -1,7 +1,9 @@
 package com.proyecto.integrador.product;
 
 import com.proyecto.integrador.auditing.Auditable;
+import com.proyecto.integrador.category.Category;
 import com.proyecto.integrador.reservation.Reservation;
+import com.proyecto.integrador.review.Review;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -29,9 +31,9 @@ public class Product extends Auditable {
   @Size(min = 3, max = 50, message = "Instrument name should be between 3 and 50 characters")
   private String name;
 
-  @Column(nullable = false)
-  @NotEmpty(message = "Category is required")
-  private String category;
+  @ManyToOne(fetch = FetchType.LAZY, optional = true)
+  @JoinColumn(name = "category", nullable = true, referencedColumnName = "name")
+  private Category category;
 
   @Column(nullable = true)
   @Size(min = 3, max = 50, message = "Brand should be between 3 and 50 characters")
@@ -50,6 +52,12 @@ public class Product extends Auditable {
   @Positive(message = "Price should be greater than 0")
   private Float price;
 
+  @Column(nullable = true)
+  private Float rating;
+
+  @Column(nullable = true)
+  private Integer ratingCount;
+
   @Column(nullable = true, length = 2500)
   @Size.List({
     @Size(max = 7, message = "Maximum 7 images are allowed")
@@ -64,4 +72,6 @@ public class Product extends Auditable {
   @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private Set<Reservation> reservations;
 
+  @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private Set<Review> reviews;
 }
