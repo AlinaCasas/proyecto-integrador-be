@@ -1,5 +1,6 @@
 package com.proyecto.integrador.product.dto;
 
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,6 +18,8 @@ public class ProductDTO {
     private String model;
     private String description;
     private Float price;
+    private Float rating;
+    private Integer ratingCount;
     private List<String> images;
     private Integer discount;
     private List<ProductReservationDTO> reservations;
