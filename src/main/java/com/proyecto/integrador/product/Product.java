@@ -1,6 +1,7 @@
 package com.proyecto.integrador.product;
 
 import com.proyecto.integrador.auditing.Auditable;
+import com.proyecto.integrador.category.Category;
 import com.proyecto.integrador.reservation.Reservation;
 import com.proyecto.integrador.review.Review;
 import jakarta.persistence.*;
@@ -30,9 +31,9 @@ public class Product extends Auditable {
   @Size(min = 3, max = 50, message = "Instrument name should be between 3 and 50 characters")
   private String name;
 
-  @Column(nullable = false)
-  @NotEmpty(message = "Category is required")
-  private String category;
+  @ManyToOne(fetch = FetchType.LAZY, optional = true)
+  @JoinColumn(name = "category", nullable = true, referencedColumnName = "name")
+  private Category category;
 
   @Column(nullable = true)
   @Size(min = 3, max = 50, message = "Brand should be between 3 and 50 characters")
@@ -72,5 +73,5 @@ public class Product extends Auditable {
   private Set<Reservation> reservations;
 
   @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<Review> reviews;
+  private Set<Review> reviews;
 }

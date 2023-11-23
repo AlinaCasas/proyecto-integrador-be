@@ -1,5 +1,6 @@
 package com.proyecto.integrador.product.dto;
 
+import com.proyecto.integrador.category.Category;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

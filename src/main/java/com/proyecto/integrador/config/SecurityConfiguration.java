@@ -56,6 +56,7 @@ public class SecurityConfiguration {
                                 .requestMatchers("/api/v1/reviews/admin/**").hasAnyRole(ADMIN.name())
                                 .requestMatchers(GET, "/api/v1/reviews/product/**").permitAll()
                                 .requestMatchers("/api/v1/reviews/**").hasAnyRole(USER.name(), ADMIN.name())
+                                .requestMatchers(GET, "/api/v1/categories/**").permitAll()
                                 .anyRequest()
                                 .authenticated()
                 )
