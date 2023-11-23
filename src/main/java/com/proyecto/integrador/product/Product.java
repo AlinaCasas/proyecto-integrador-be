@@ -31,8 +31,8 @@ public class Product extends Auditable {
   @Size(min = 3, max = 50, message = "Instrument name should be between 3 and 50 characters")
   private String name;
 
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "category_id", nullable = false)
+  @ManyToOne(fetch = FetchType.LAZY, optional = true)
+  @JoinColumn(name = "category", nullable = true, referencedColumnName = "name")
   private Category category;
 
   @Column(nullable = true)
@@ -73,5 +73,5 @@ public class Product extends Auditable {
   private Set<Reservation> reservations;
 
   @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<Review> reviews;
+  private Set<Review> reviews;
 }

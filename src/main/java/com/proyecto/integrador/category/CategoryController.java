@@ -1,5 +1,7 @@
 package com.proyecto.integrador.category;
 import com.proyecto.integrador.category.dto.CategoryDTO;
+import com.proyecto.integrador.category.dto.UpdateCategoryDTO;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,23 +20,22 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}")
-    public Category getCategoryById(@PathVariable Long id) {
-        return categoryService.getCategoryById(id);
+    public Category getCategoryById(@PathVariable(value = "name", required = true) String name) {
+        return categoryService.getCategoryByName(name);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public Category createCategory(@RequestBody CategoryDTO categoryDTO) {
+    public Category createCategory(@RequestBody @Valid CategoryDTO categoryDTO) {
         return categoryService.createCategory(categoryDTO);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{name}")
     public Category updateCategoryDescription(
-            @PathVariable String name,
-            @RequestParam String description
+            @PathVariable String name, @RequestBody @Valid UpdateCategoryDTO updateCategoryDTO
     ) {
-        return categoryService.updateCategory(name, description);
+        return categoryService.updateCategory(name, updateCategoryDTO);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
