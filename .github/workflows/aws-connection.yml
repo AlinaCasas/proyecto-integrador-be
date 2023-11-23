@@ -48,7 +48,14 @@ jobs:
 
       - name: Detener Docker existente si hay
         run: |
-          ssh -i $HOME/.ssh/1023c07-grupo5.pem ec2-user@174.129.92.139 "sudo docker stop $(sudo docker ps -a -q)"
+          ssh -i $HOME/.ssh/1023c07-grupo5.pem ec2-user@174.129.92.139 '
+            ids=$(sudo docker ps -a -q)
+            for id in $ids
+            do
+              echo "$id"
+              sudo docker stop $id && sudo docker rm $id
+            done
+          '
           
       - name: Build y Ejecución de Docker
         run: |
