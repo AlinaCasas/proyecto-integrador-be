@@ -1,7 +1,9 @@
 package com.proyecto.integrador.product;
 
+import com.proyecto.integrador.category.Category;
 import com.proyecto.integrador.product.dto.ProductDTO;
 import com.proyecto.integrador.product.dto.UpdateProductDTO;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -18,6 +20,7 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import com.proyecto.integrador.category.CategoryRepository;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,6 +35,8 @@ public class ProductController {
 
     @Autowired
     private ProductService service;
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     @GetMapping
     public ResponseEntity<Page<ProductDTO>> find(
@@ -61,16 +66,30 @@ public class ProductController {
 
     @PostMapping
     public ResponseEntity<?> create(
+            @RequestParam(value = "categoryId", required = true) Long categoryId,
             @RequestParam(value = "imagesFiles", required = false) MultipartFile[] imagesFiles,
             @Valid @ModelAttribute Product product
     ) {
-        if (imagesFiles != null) {
-            HashMap<String, String> imagesError = validateImages(imagesFiles);
-            if (imagesError != null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(imagesError);
+        try {
+            if (imagesFiles != null) {
+                HashMap<String, String> imagesError = validateImages(imagesFiles);
+                if (imagesError != null) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(imagesError);
+                }
+
+                // Buscar la categoría por ID
+                Category category = categoryRepository.findById(categoryId)
+                        .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + categoryId));
+
+                // Asignar la categoría al producto
+                product.setCategory(category);
             }
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(service.createProduct(product, imagesFiles));
+        } catch (Exception e) {
+            e.printStackTrace(); // Imprime la excepción en la consola
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Unexpected error: " + e.getMessage());
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.createProduct(product, imagesFiles));
     }
 
     @PutMapping("/{id}")

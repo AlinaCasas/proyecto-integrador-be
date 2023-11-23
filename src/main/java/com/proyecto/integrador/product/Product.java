@@ -30,7 +30,7 @@ public class Product extends Auditable {
   @Size(min = 3, max = 50, message = "Instrument name should be between 3 and 50 characters")
   private String name;
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "category_id", nullable = false)
   private Category category;
 
