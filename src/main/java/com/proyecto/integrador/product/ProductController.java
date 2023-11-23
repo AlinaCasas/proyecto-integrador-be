@@ -1,6 +1,7 @@
 package com.proyecto.integrador.product;
 
 import com.proyecto.integrador.category.Category;
+import com.proyecto.integrador.exceptions.BadRequestException;
 import com.proyecto.integrador.product.dto.ProductDTO;
 import com.proyecto.integrador.product.dto.UpdateProductDTO;
 import jakarta.persistence.EntityNotFoundException;
@@ -66,30 +67,21 @@ public class ProductController {
 
     @PostMapping
     public ResponseEntity<?> create(
-            @RequestParam(value = "categoryId", required = true) Long categoryId,
+            @RequestParam(value = "categoryName", required = true) String categoryName,
             @RequestParam(value = "imagesFiles", required = false) MultipartFile[] imagesFiles,
             @Valid @ModelAttribute Product product
     ) {
-        try {
-            if (imagesFiles != null) {
-                HashMap<String, String> imagesError = validateImages(imagesFiles);
-                if (imagesError != null) {
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(imagesError);
-                }
+        Category foundCategory = categoryRepository.findByName(categoryName).orElseThrow(() -> new BadRequestException("Category not found with name: "  + categoryName));
+        product.setCategory(foundCategory);
 
-                // Buscar la categoría por ID
-                Category category = categoryRepository.findById(categoryId)
-                        .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + categoryId));
-
-                // Asignar la categoría al producto
-                product.setCategory(category);
+        if (imagesFiles != null) {
+            HashMap<String, String> imagesError = validateImages(imagesFiles);
+            if (imagesError != null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(imagesError);
             }
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(service.createProduct(product, imagesFiles));
-        } catch (Exception e) {
-            e.printStackTrace(); // Imprime la excepción en la consola
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Unexpected error: " + e.getMessage());
         }
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.createProduct(product, imagesFiles));
     }
 
     @PutMapping("/{id}")

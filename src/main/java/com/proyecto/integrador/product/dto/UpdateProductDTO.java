@@ -14,7 +14,7 @@ public class UpdateProductDTO {
     @Size(min = 3, max = 50, message = "Instrument name should be between 3 and 50 characters")
     private String name;
 
-    private Category category;
+    private String category;
 
     @Size(min = 3, max = 50, message = "Brand should be between 3 and 50 characters")
     private String brand;
@@ -33,8 +33,4 @@ public class UpdateProductDTO {
     @Min(value = 0, message = "Discount should be greater than 0%")
     @Max(value = 100, message = "Discount should be less than 100%")
     private Integer discount;
-
-    public String getCategory() {
-        return category.getName();
-    }
 }

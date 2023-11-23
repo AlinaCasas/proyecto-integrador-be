@@ -34,12 +34,10 @@ public class ProductService {
 
     @Autowired
     private ProductRepository productRepository;
-
     @Autowired
     private ReservationRepository reservationRepository;
     @Autowired
     private CategoryRepository categoryRepository;
-
     @Autowired
     private AmazonS3 amazonS3;
 
@@ -80,7 +78,7 @@ public class ProductService {
 
         List<Reservation> reservationList = reservationRepository.findAllActiveReservationsByProductId(id);
         List<ProductReservationDTO> reservations = reservationList.stream().map(this::reservationToProductReservationDTO).toList();
-        return new ProductDTO(product.getId(), product.getName(), product.getCategory(), product.getBrand(), product.getModel(), product.getDescription(), product.getPrice(), product.getRating(), product.getRatingCount(), product.getImages(), product.getDiscount(), reservations);
+        return new ProductDTO(product.getId(), product.getName(), product.getCategory().getName(), product.getBrand(), product.getModel(), product.getDescription(), product.getPrice(), product.getRating(), product.getRatingCount(), product.getImages(), product.getDiscount(), reservations);
     }
 
 
@@ -89,6 +87,7 @@ public class ProductService {
         if (product.getImages() != null && product.getImages().size() + imagesFiles.length > 7) {
             throw new BadRequestException("Product can't have more than 7 images");
         }
+
         product.setDiscount(Optional.ofNullable(product.getDiscount()).orElse(0));
         Product savedProduct = trySaveProduct(product);
 
@@ -126,11 +125,7 @@ public class ProductService {
         if (name != null) product.setName(updateProductDTO.getName());
         if (updateProductDTO.getCategory() != null) {
             String categoryName = updateProductDTO.getCategory();
-            Category foundCategory = categoryRepository.findByName(categoryName);
-
-            if (foundCategory == null) {
-                throw new EntityNotFoundException("Category not found with name: " + categoryName);
-            }
+            Category foundCategory = categoryRepository.findByName(categoryName).orElseThrow(() -> new BadRequestException("Category not found with name: " + categoryName));
 
             product.setCategory(foundCategory);
         }
@@ -171,7 +166,7 @@ public class ProductService {
         }
 
         List<ProductReservationDTO> reservations = saveProduct.getReservations().stream().map(this::reservationToProductReservationDTO).toList();
-        return new ProductDTO(saveProduct.getId(), saveProduct.getName(), saveProduct.getCategory(), saveProduct.getBrand(), saveProduct.getModel(), saveProduct.getDescription(), saveProduct.getPrice(), saveProduct.getRating(), saveProduct.getRatingCount(), saveProduct.getImages(), saveProduct.getDiscount(), reservations);
+        return new ProductDTO(saveProduct.getId(), saveProduct.getName(), saveProduct.getCategory().getName(), saveProduct.getBrand(), saveProduct.getModel(), saveProduct.getDescription(), saveProduct.getPrice(), saveProduct.getRating(), saveProduct.getRatingCount(), saveProduct.getImages(), saveProduct.getDiscount(), reservations);
     }
 
     public void deleteProduct(Long id){
