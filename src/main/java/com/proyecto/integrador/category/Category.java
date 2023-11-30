@@ -1,5 +1,6 @@
 package com.proyecto.integrador.category;
 import com.proyecto.integrador.auditing.Auditable;
+import com.proyecto.integrador.characteristics.Characteristic;
 import com.proyecto.integrador.product.Product;
 import com.proyecto.integrador.review.Review;
 import jakarta.persistence.Entity;
@@ -34,4 +35,7 @@ public class Category extends Auditable {
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Product> products;
+
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<Characteristic> characteristics;
 }
