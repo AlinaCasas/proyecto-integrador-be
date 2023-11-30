@@ -192,7 +192,7 @@ public class ProductService {
         return ProductDTO.builder()
                 .id(product.getId())
                 .name(product.getName())
-                .category(product.getCategory() != null ? product.getCategory().getName() : null)
+                .category(product.getCategory().getName())
                 .brand(product.getBrand())
                 .model(product.getModel())
                 .description(product.getDescription())
