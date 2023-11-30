@@ -3,7 +3,8 @@ package com.proyecto.integrador;
 import com.proyecto.integrador.auth.AuthenticationRequest;
 import com.proyecto.integrador.auth.AuthenticationService;
 import com.proyecto.integrador.auth.RegisterRequest;
-
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -20,6 +21,19 @@ public class ProyectoIntegradorApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(ProyectoIntegradorApplication.class, args);
+	}
+
+	@Bean
+	public WebMvcConfigurer corsConfigurer() {
+		return new WebMvcConfigurer() {
+			@Override
+			public void addCorsMappings(CorsRegistry registry) {
+				registry.addMapping("/**")
+						.allowedOrigins("*")
+						.allowedMethods("*")
+						.allowedHeaders("*");
+			}
+		};
 	}
 
 	@Bean
