@@ -1,6 +1,7 @@
 package com.proyecto.integrador.favorites;
 
 import com.proyecto.integrador.product.Product;
+import com.proyecto.integrador.product.dto.ProductDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +25,6 @@ public class FavoriteController {
     }
 
     // Endpoint para remover un instrumento de favoritos
-    @Transactional
     @PostMapping("/remove")
     public ResponseEntity<String> removeFavorite(@RequestParam String userEmail, @RequestParam Long productId) {
         favoriteService.removeFavorite(userEmail, productId);
@@ -33,8 +33,8 @@ public class FavoriteController {
 
     // Endpoint para listar todos los instrumentos favoritos de un usuario
     @GetMapping("/list")
-    public ResponseEntity<List<Product>> listFavorites(@RequestParam String userEmail) {
-        List<Product> favorites = favoriteService.listFavorites(userEmail);
+    public ResponseEntity<List<ProductDTO>> listFavorites(@RequestParam String userEmail) {
+        List<ProductDTO> favorites = favoriteService.listFavorites(userEmail);
         return ResponseEntity.status(HttpStatus.OK).body(favorites);
     }
 }
