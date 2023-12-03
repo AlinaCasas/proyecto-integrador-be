@@ -30,6 +30,9 @@ public class ReservationController {
     @Autowired
     private ReservationService service;
 
+
+    private final EmailRest emailRest;
+
     @GetMapping()
     public ResponseEntity<List<ResponseReservationDTO>> find(Authentication authentication) {
         User user = (User) authentication.getPrincipal();
@@ -44,20 +47,16 @@ public class ReservationController {
     @PostMapping
     public ResponseEntity<ReservationResponse> create(@ModelAttribute @Valid CreateReservationDTO reservationDTO, Authentication authentication) {
         User user = (User) authentication.getPrincipal();
+
         ReservationResponse response = service.createReservation(reservationDTO, user);
 
-        // Envía un correo electrónico solo si la reserva se creó correctamente
-        sendReservationConfirmationEmail(user.getEmail(), reservationDTO);
+        Long productId = reservationDTO.getProductId();
+        String productName = service.findProductNameById(productId);
 
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    private void sendReservationConfirmationEmail(String userEmail, CreateReservationDTO reservationDTO) {
-        String subject = "Confirmación de Reserva en Notas Prestadas";
+        String subject = "¡Tu reserva de Notas Prestadas!";
         String content = "¡Hola!\n\n" +
                 "Te confirmamos que tu reserva en Notas Prestadas ha sido realizada con éxito. Aquí están los detalles de tu reserva:\n\n" +
-                "Producto: [Nombre del Producto]\n" + // Reemplaza con el nombre real del producto
+                "Producto: "+productName+"\n" + // Reemplaza con el nombre real del producto
                 "Fecha de Inicio: " + convertTimestampToDateString(reservationDTO.getStartDate()) + "\n" +
                 "Fecha de Fin: " + convertTimestampToDateString(reservationDTO.getEndDate()) + "\n\n" +
                 "¡Gracias por elegir Notas Prestadas para tus necesidades musicales!\n\n" +
@@ -65,9 +64,10 @@ public class ReservationController {
                 "El equipo de Notas Prestadas\n"+
                 "notasprestadas@gmail.com";
 
-        EmailRequest emailRequest = new EmailRequest(userEmail, subject, content);
-        EmailRest emailRest = new EmailRest();
+        EmailRequest emailRequest = new EmailRequest(user.getEmail(), subject, content);
         emailRest.sendEmail(emailRequest);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     // Método para convertir una marca de tiempo en formato de cadena de fecha
@@ -78,9 +78,31 @@ public class ReservationController {
         return zonedDateTime.format(formatter);
     }
 
+
     @PutMapping("/{id}")
-    public ResponseEntity<ReservationResponse> update(@PathVariable(value = "id", required = false) Long id, @RequestBody @Valid UpdateReservationDTO reservation, Authentication authentication, Errors errors) {
+    public ResponseEntity<ReservationResponse> update(@PathVariable(value = "id", required = false) Long id,
+                                                      @ModelAttribute @Valid UpdateReservationDTO reservation,
+                                                      Authentication authentication, Errors errors) {
         User user = (User) authentication.getPrincipal();
+
+        // Obtener el nombre del producto utilizando el ID del producto en UpdateReservationDTO
+        Long productId = reservation.getProductId();
+        String productName = service.findProductNameById(productId);
+
+        String subject = "¡Actualización de tu reserva en Notas Prestadas!";
+        String content = "¡Hola!\n\n" +
+                "Te informamos que hemos actualizado los detalles de tu reserva en Notas Prestadas. Aquí están los nuevos detalles:\n\n" +
+                "Producto: " + productName + "\n" +
+                "Fecha de Inicio: " + convertTimestampToDateString(reservation.getStartDate()) + "\n" +
+                "Fecha de Fin: " + convertTimestampToDateString(reservation.getEndDate()) + "\n\n" +
+                "¡Gracias por confiar en Notas Prestadas para tus necesidades musicales!\n\n" +
+                "Saludos,\n" +
+                "El equipo de Notas Prestadas\n" +
+                "notasprestadas@gmail.com";
+
+        EmailRequest emailRequest = new EmailRequest(user.getEmail(), subject, content);
+        emailRest.sendEmail(emailRequest);
+
         return ResponseEntity.status(HttpStatus.OK).body(service.updateReservation(id, reservation, user));
     }
 

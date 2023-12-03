@@ -12,8 +12,8 @@ import java.util.Properties;
 @Configuration
 public class EmailConfig {
 
-//    @Value("notasprestadasdh")
-//    private String mailPassword;
+    @Value("${mail.password}")
+    private String mailPassword;
 
 
     @Bean
@@ -22,7 +22,7 @@ public class EmailConfig {
         mailSender.setHost("smtp.gmail.com");
         mailSender.setPort(587);
         mailSender.setUsername("notasprestadas@gmail.com");
-        mailSender.setPassword("notasprestadasdh");
+        mailSender.setPassword(mailPassword);
 
         Properties properties = new Properties();
         properties.put("mail.smtp.auth", "true");

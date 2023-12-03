@@ -17,7 +17,7 @@ spring:
     database: mysql
     database-platform: org.hibernate.dialect.MySQLDialect
 mail:
-  password: notasprestadasdh
+  password: "udheqmucpihbpljv"
 cloud:
   aws:
     credentials:
