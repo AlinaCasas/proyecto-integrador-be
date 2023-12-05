@@ -3,7 +3,6 @@ package com.proyecto.integrador;
 import com.proyecto.integrador.auth.AuthenticationRequest;
 import com.proyecto.integrador.auth.AuthenticationService;
 import com.proyecto.integrador.auth.RegisterRequest;
-
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -157,5 +158,10 @@ public class ReservationService {
         if (!Objects.equals(reservation.getUser().getId(), user.getId())) throw new BadRequestException("You can't delete this reservation");
         reservation.setDeletedAt(new Date());
         reservationRepository.save(reservation);
+    }
+
+    public String findProductNameById(Long productId) {
+        Optional<Product> productOptional = productRepository.findById(productId);
+        return productOptional.map(Product::getName).orElse(null);
     }
 }
