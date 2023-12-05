@@ -31,11 +31,9 @@ public class Characteristic extends Auditable {
     @Id
     private String name;
 
+    @Column(name = "image", nullable = true)
+    private String image;
 
-    /*icono file */
-
-
-    /*atributo category */
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "category", nullable = true, referencedColumnName = "name")
     private Category category;

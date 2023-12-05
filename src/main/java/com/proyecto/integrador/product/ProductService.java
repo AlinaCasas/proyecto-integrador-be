@@ -259,9 +259,13 @@ public class ProductService {
                 String imageName = parts[parts.length - 1];
                 imagesToDelete.add(imageName);
             }
-            DeleteObjectsRequest deleteObjectsRequest = new DeleteObjectsRequest(bucketName).withKeys(imagesToDelete.toArray(new String[0]));
-            amazonS3.deleteObjects(deleteObjectsRequest);
-            return true;
+            try {
+                DeleteObjectsRequest deleteObjectsRequest = new DeleteObjectsRequest(bucketName).withKeys(imagesToDelete.toArray(new String[0]));
+                amazonS3.deleteObjects(deleteObjectsRequest);
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
         } else {
             return false;
         }
