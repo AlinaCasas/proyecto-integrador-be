@@ -1,7 +1,9 @@
 package com.proyecto.integrador.product;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.proyecto.integrador.auditing.Auditable;
 import com.proyecto.integrador.category.Category;
+import com.proyecto.integrador.favorites.UserFavoriteProduct;
 import com.proyecto.integrador.characteristics.Characteristic;
 import com.proyecto.integrador.reservation.Reservation;
 import com.proyecto.integrador.review.Review;
@@ -75,6 +77,10 @@ public class Product extends Auditable {
 
   @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private Set<Review> reviews;
+
+  @JsonIgnore
+  @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private Set<UserFavoriteProduct> favoriteUsers;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = true)
   @JoinColumn(name = "characteristic", nullable = true, referencedColumnName = "name")
