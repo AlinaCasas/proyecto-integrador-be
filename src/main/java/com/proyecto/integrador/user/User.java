@@ -1,6 +1,7 @@
 package com.proyecto.integrador.user;
 
 import com.proyecto.integrador.auditing.Auditable;
+import com.proyecto.integrador.favorites.UserFavoriteProduct;
 import com.proyecto.integrador.reservation.Reservation;
 import com.proyecto.integrador.review.Review;
 import com.proyecto.integrador.token.Token;
@@ -48,6 +49,9 @@ public class User extends Auditable implements UserDetails {
 
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private Set<Review> reviews;
+
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private Set<UserFavoriteProduct> favoriteProducts;
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
