@@ -25,8 +25,6 @@ import java.util.Set;
 @AllArgsConstructor
 @Entity
 @Table(name = "Characteristic")
-@SQLDelete(sql = "UPDATE characteristic SET deleted_at = NOW() WHERE id = ?")
-@Where(clause = "deleted_at IS NULL")
 public class Characteristic extends Auditable {
     @Id
     private String name;
