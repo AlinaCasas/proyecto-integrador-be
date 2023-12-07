@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -80,6 +81,8 @@ public class CharacteristicService {
     @PreAuthorize("hasRole('ADMIN')")
     public void softDeleteCharacteristic(String name){
         Characteristic characteristic = characteristicRepository.findByName(name).orElseThrow(() -> new BadRequestException("Characteristic not found with name: "));
+        characteristic.setDeletedAt(new Date());
+        characteristicRepository.save(characteristic);
     }
 
     private String uploadImage(MultipartFile image, String name) {
