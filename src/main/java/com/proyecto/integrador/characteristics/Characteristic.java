@@ -15,6 +15,7 @@ import org.hibernate.annotations.Where;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -26,10 +27,16 @@ import java.util.Set;
 @Entity
 @Table(name = "Characteristic")
 @SQLDelete(sql = "UPDATE characteristic SET deleted_at = NOW() WHERE id = ?")
-@Where(clause = "deleted_at IS NULL")
+//@Where(clause = "deleted_at IS NULL")
 public class Characteristic extends Auditable {
     @Id
+    @Column(name = "name", nullable = false, unique = true)
     private String name;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "deleted_at")
+    private Date deletedAt;
+
 
     @Column(name = "image", nullable = true)
     private String image;
@@ -40,5 +47,6 @@ public class Characteristic extends Auditable {
 
     @OneToMany(mappedBy = "characteristic", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Product> products;
+
 
 }

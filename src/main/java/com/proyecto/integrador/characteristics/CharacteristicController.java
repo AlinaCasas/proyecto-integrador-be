@@ -24,7 +24,13 @@ public class CharacteristicController {
         return characteristicService.getAllCharacteristics();
     }
 
-    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/deleted")
+    public List<Characteristic> getAllDeletedCharacteristics() {
+        return characteristicService.getAllDeletedCharacteristics();
+    }
+
+    @GetMapping("/{name}")
     public Characteristic getCharacteristicById(@PathVariable(value = "name", required = true) String name){
         return characteristicService.getCharacteristicByName(name);
     }
