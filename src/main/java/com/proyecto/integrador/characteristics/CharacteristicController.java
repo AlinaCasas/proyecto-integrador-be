@@ -24,8 +24,8 @@ public class CharacteristicController {
         return characteristicService.getAllCharacteristics();
     }
 
-    @GetMapping("/{id}")
-    public Characteristic getCharacteristicById(@PathVariable(value = "name", required = true) String name){
+    @GetMapping("/{name}")
+    public Characteristic getCharacteristicByName(@PathVariable(value = "name", required = true) String name){
         return characteristicService.getCharacteristicByName(name);
     }
 
