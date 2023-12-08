@@ -93,7 +93,6 @@ public class CharacteristicService {
 
         // Agrega estas líneas para imprimir la fecha antes de guardarla
         System.out.println("Fecha antes de guardar: " + characteristic.getDeletedAt());
-
         characteristicRepository.save(characteristic);
     }
 
