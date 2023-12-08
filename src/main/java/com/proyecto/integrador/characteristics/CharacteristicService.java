@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -32,6 +33,10 @@ public class CharacteristicService {
 
     public List<Characteristic> getAllCharacteristics() {
         return characteristicRepository.findAllByDeletedAtIsNull();
+    }
+
+    public List<Characteristic> getAllDeletedCharacteristics() {
+        return characteristicRepository.findAllByDeletedAtIsNotNull();
     }
 
     public Characteristic getCharacteristicByName(String name) {
@@ -79,9 +84,15 @@ public class CharacteristicService {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    public void softDeleteCharacteristic(String name){
-        Characteristic characteristic = characteristicRepository.findByName(name).orElseThrow(() -> new BadRequestException("Characteristic not found with name: "));
+    public void softDeleteCharacteristic(String name) {
+        Characteristic characteristic = characteristicRepository.findByName(name)
+                .orElseThrow(() -> new BadRequestException("Characteristic not found with name: " + name));
+
+        // Establecer la fecha de eliminación
         characteristic.setDeletedAt(new Date());
+
+        // Agrega estas líneas para imprimir la fecha antes de guardarla
+        System.out.println("Fecha antes de guardar: " + characteristic.getDeletedAt());
         characteristicRepository.save(characteristic);
     }
 

@@ -9,5 +9,7 @@ import java.util.Optional;
 @Repository
 public interface CharacteristicRepository extends JpaRepository<Characteristic, Long> {
     List<Characteristic> findAllByDeletedAtIsNull();
+
+    List<Characteristic> findAllByDeletedAtIsNotNull();
     Optional<Characteristic> findByName(String name);
 }
