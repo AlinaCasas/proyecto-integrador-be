@@ -29,7 +29,7 @@ public class FavoriteService {
     @Autowired
     private ProductRepository productRepository;
 
-    public void addFavorite(String userEmail, Long productId) {
+    public String addFavorite(String userEmail, Long productId) {
         logger.debug("Correo electrónico proporcionado: {}", userEmail);
         User user = userRepository.findByEmail(userEmail.trim())
                 .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado con el correo: " + userEmail));
@@ -46,6 +46,9 @@ public class FavoriteService {
             userFavoriteProduct.setProduct(product);
 
             userFavoriteProductRepository.save(userFavoriteProduct);
+            return "Instrumento agregado a favoritos";
+        } else {
+            return "Este instrumento ya se encuentra en favoritos";
         }
     }
 
