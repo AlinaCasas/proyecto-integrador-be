@@ -1,5 +1,6 @@
 package com.proyecto.integrador.product.dto;
 
+import com.proyecto.integrador.product.dto.ProductReservationDTO;
 import com.proyecto.integrador.characteristics.dto.ResponseCharacteristicDTO;
 import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
