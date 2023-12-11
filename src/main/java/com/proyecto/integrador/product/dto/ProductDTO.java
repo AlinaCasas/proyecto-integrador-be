@@ -26,4 +26,5 @@ public class ProductDTO {
     private Integer discount;
     private List<ProductReservationDTO> reservations;
     private List<ResponseCharacteristicDTO> characteristics;
+    private List<String> policies;
 }

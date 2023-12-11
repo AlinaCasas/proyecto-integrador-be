@@ -92,7 +92,7 @@ public class ProductService {
         List<Characteristic> characteristicsList = characteristicRepository.findAllByProductsId(id);
         List<ResponseCharacteristicDTO> characteristics = characteristicsList.stream().map(this::characteristicToCharacteristicDTO).toList();
 
-        return new ProductDTO(product.getId(), product.getName(), product.getCategory().getName(), product.getBrand(), product.getModel(), product.getDescription(), product.getPrice(), product.getRating(), product.getRatingCount(), product.getImages(), product.getDiscount(), reservations, characteristics);
+        return new ProductDTO(product.getId(), product.getName(), product.getCategory().getName(), product.getBrand(), product.getModel(), product.getDescription(), product.getPrice(), product.getRating(), product.getRatingCount(), product.getImages(), product.getDiscount(), reservations, characteristics, product.getPolicies());
     }
 
 
@@ -129,6 +129,7 @@ public class ProductService {
                 .images(product.getImages())
                 .discount(product.getDiscount())
                 .characteristics(foundCharacteristics)
+                .policies(product.getPolicies())
                 .build();
 
         Product savedProduct = trySaveProduct(newProduct);
@@ -154,8 +155,9 @@ public class ProductService {
         List<String> images = updateProductDTO.getImages();
         Integer discount = updateProductDTO.getDiscount();
         List<String> characteristics = updateProductDTO.getCharacteristics();
+        List<String> policies = updateProductDTO.getPolicies();
 
-        if (name == null && category == null && brand == null && model == null && description == null && price == null && images == null && discount == null && imagesFiles == null && characteristics == null) throw new BadRequestException("No data to update");
+        if (name == null && category == null && brand == null && model == null && description == null && price == null && images == null && discount == null && imagesFiles == null && characteristics == null && policies == null) throw new BadRequestException("No data to update");
 
         Product product = productRepository.findById(id).orElseThrow(() -> new BadRequestException("Product not found"));
 
@@ -185,6 +187,7 @@ public class ProductService {
         if (description != null) product.setDescription(updateProductDTO.getDescription());
         if (price != null) product.setPrice(updateProductDTO.getPrice());
         if (discount != null) product.setDiscount(updateProductDTO.getDiscount());
+        if (policies != null && !policies.isEmpty()) product.setPolicies(updateProductDTO.getPolicies());
 
         List<String> imagesToDelete = new ArrayList<>();
         if (images != null) {
@@ -219,7 +222,7 @@ public class ProductService {
         List<ProductReservationDTO> reservations = saveProduct.getReservations().stream().map(this::reservationToProductReservationDTO).toList();
         List<ResponseCharacteristicDTO> responseCharacteristics = saveProduct.getCharacteristics().stream().map(this::characteristicToCharacteristicDTO).toList();
 
-        return new ProductDTO(saveProduct.getId(), saveProduct.getName(), saveProduct.getCategory().getName(), saveProduct.getBrand(), saveProduct.getModel(), saveProduct.getDescription(), saveProduct.getPrice(), saveProduct.getRating(), saveProduct.getRatingCount(), saveProduct.getImages(), saveProduct.getDiscount(), reservations, responseCharacteristics);
+        return new ProductDTO(saveProduct.getId(), saveProduct.getName(), saveProduct.getCategory().getName(), saveProduct.getBrand(), saveProduct.getModel(), saveProduct.getDescription(), saveProduct.getPrice(), saveProduct.getRating(), saveProduct.getRatingCount(), saveProduct.getImages(), saveProduct.getDiscount(), reservations, responseCharacteristics, saveProduct.getPolicies());
     }
 
     public void deleteProduct(Long id){
@@ -267,6 +270,7 @@ public class ProductService {
                 .discount(product.getDiscount())
                 .reservations(reservations)
                 .characteristics(characteristics)
+                .policies(product.getPolicies())
                 .build();
     }
 

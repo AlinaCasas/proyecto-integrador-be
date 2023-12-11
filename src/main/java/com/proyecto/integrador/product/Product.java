@@ -84,4 +84,7 @@ public class Product extends Auditable {
 
   @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
   private List<Characteristic> characteristics;
+
+  @Column(nullable = true, length = 2500)
+  private List<String> policies;
 }
