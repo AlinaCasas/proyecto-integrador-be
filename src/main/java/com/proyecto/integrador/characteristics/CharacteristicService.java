@@ -5,8 +5,10 @@ import com.amazonaws.services.s3.model.DeleteObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.proyecto.integrador.characteristics.dto.CharacteristicDTO;
+import com.proyecto.integrador.characteristics.dto.ResponseCharacteristicDTO;
 import com.proyecto.integrador.characteristics.dto.UpdateCharacteristicDTO;
 import com.proyecto.integrador.exceptions.BadRequestException;
+import com.proyecto.integrador.product.dto.ProductReservationDTO;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,8 +33,19 @@ public class CharacteristicService {
     @Autowired
     private AmazonS3 amazonS3;
 
-    public List<Characteristic> getAllCharacteristics() {
-        return characteristicRepository.findAllByDeletedAtIsNull();
+
+    private ResponseCharacteristicDTO characteristicToResponseCharacteristicDTO(Characteristic characteristic) {
+        return ResponseCharacteristicDTO.builder()
+                .name(characteristic.getName())
+                .image(characteristic.getImage())
+                .build();
+    }
+
+    public List<ResponseCharacteristicDTO> getAllCharacteristics() {
+        List<Characteristic> characteristicList = characteristicRepository.findAllByDeletedAtIsNull();
+
+        List<ResponseCharacteristicDTO> responseCharacteristicList = characteristicList.stream().map(this::characteristicToResponseCharacteristicDTO).toList();
+        return responseCharacteristicList;
     }
 
     public List<Characteristic> getAllDeletedCharacteristics() {
