@@ -10,10 +10,7 @@ import com.proyecto.integrador.characteristics.Characteristic;
 import com.proyecto.integrador.characteristics.CharacteristicRepository;
 import com.proyecto.integrador.characteristics.dto.ResponseCharacteristicDTO;
 import com.proyecto.integrador.exceptions.BadRequestException;
-import com.proyecto.integrador.product.dto.CreateProductDTO;
-import com.proyecto.integrador.product.dto.ProductDTO;
-import com.proyecto.integrador.product.dto.ProductReservationDTO;
-import com.proyecto.integrador.product.dto.UpdateProductDTO;
+import com.proyecto.integrador.product.dto.*;
 import com.proyecto.integrador.reservation.Reservation;
 import com.proyecto.integrador.reservation.ReservationRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -47,6 +44,20 @@ public class ProductService {
     private CharacteristicRepository characteristicRepository;
     @Autowired
     private AmazonS3 amazonS3;
+
+    public SearchProductDTO search(String query) {
+        List<Product> suggestionsProducts = productRepository.findSuggestionsProducts(query);
+        List <ProductDTO> suggestionsProductsDTO = new ArrayList<>();
+
+        suggestionsProducts.forEach(product -> {
+         suggestionsProductsDTO.add(new ProductDTO(product.getId(), product.getName(), product.getCategory().getName(), product.getBrand(), product.getModel(), product.getDescription(), product.getPrice(), product.getRating(), product.getRatingCount(), product.getImages(), product.getDiscount(), null, null, product.getPolicies()));
+        });
+
+        List<String> suggestionsNames = productRepository.findSuggestionsNames(query);
+
+
+        return new SearchProductDTO(suggestionsNames, suggestionsProductsDTO);
+    }
 
     public Page<ProductDTO> findProductsUsingSQL(Long id, String name, String category, String brand, String model, String description, Float priceMin, Float priceMax, Integer discount, int page, int limit, String sort, String order, Long startDate, Long endDate) {
         if (startDate != null && endDate == null || startDate == null && endDate != null) {

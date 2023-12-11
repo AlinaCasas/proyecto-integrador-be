@@ -51,6 +51,7 @@ public class SecurityConfiguration {
                         req.requestMatchers(PUBLIC_LIST_URL)
                                 .permitAll()
                                 .requestMatchers(GET, "/api/v1/products/**").permitAll()
+                                .requestMatchers(GET, "/api/v1/search/**").permitAll()
                                 .requestMatchers(POST, "/api/v1/products/**").hasAnyRole(ADMIN.name())
                                 .requestMatchers(POST, "/api/v1/products/images/**").hasAnyRole(ADMIN.name())
                                 .requestMatchers(PUT, "/api/v1/products/**").hasAnyRole(ADMIN.name())
