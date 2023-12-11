@@ -1,6 +1,7 @@
 package com.proyecto.integrador.characteristics;
 
 import com.proyecto.integrador.characteristics.dto.CharacteristicDTO;
+import com.proyecto.integrador.characteristics.dto.ResponseCharacteristicDTO;
 import com.proyecto.integrador.characteristics.dto.UpdateCharacteristicDTO;
 import com.proyecto.integrador.exceptions.BadRequestException;
 import jakarta.validation.Valid;
@@ -20,7 +21,7 @@ public class CharacteristicController {
     private CharacteristicService characteristicService;
 
     @GetMapping
-    public List<Characteristic> getAllCharacteristics(){
+    public List<ResponseCharacteristicDTO> getAllCharacteristics(){
         return characteristicService.getAllCharacteristics();
     }
 

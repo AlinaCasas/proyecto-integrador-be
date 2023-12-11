@@ -10,6 +10,10 @@ import java.util.Optional;
 @Repository
 public interface CharacteristicRepository extends JpaRepository<Characteristic, Long> {
     List<Characteristic> findAllByDeletedAtIsNull();
+
+    @Query(value = "SELECT c.name, c.image, c.created_at, c.updated_at, c.deleted_at FROM characteristic c WHERE c.deleted_at IS NULL",
+            nativeQuery = true)
+    List<Characteristic> findAllOnlyNameAndImage();
     List<Characteristic> findAllByDeletedAtIsNotNull();
     Optional<Characteristic> findByName(String name);
 
