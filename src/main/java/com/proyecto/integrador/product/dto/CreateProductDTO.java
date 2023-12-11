@@ -45,4 +45,6 @@ public class CreateProductDTO {
     private Integer discount;
 
     private List<String> characteristics;
+
+    private List<String> policies;
 }

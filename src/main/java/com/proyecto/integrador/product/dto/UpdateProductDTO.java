@@ -35,4 +35,6 @@ public class UpdateProductDTO {
     private Integer discount;
 
     private List<String> characteristics;
+
+    private List<String> policies;
 }
