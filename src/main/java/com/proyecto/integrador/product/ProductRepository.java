@@ -20,6 +20,19 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
   @Query(value = "SELECT * FROM product p " +
           "WHERE p.deleted_at IS NULL " +
+          "AND p.name LIKE CONCAT('%', :query, '%') ORDER BY RAND() LIMIT 5",
+          nativeQuery = true)
+  List<Product> findSuggestionsProducts(@Param("query") String query);
+
+    @Query(value = "SELECT p.name FROM product p " +
+            "WHERE p.deleted_at IS NULL " +
+            "AND p.name LIKE CONCAT('%', :query, '%') ORDER BY p.name ASC LIMIT 10",
+            nativeQuery = true)
+    List<String> findSuggestionsNames(@Param("query") String query);
+
+
+  @Query(value = "SELECT * FROM product p " +
+          "WHERE p.deleted_at IS NULL " +
           "AND (:id IS NULL OR p.id = :id) " +
           "AND (:name IS NULL OR p.name LIKE CONCAT('%', :name, '%')) " +
           "AND (:category IS NULL OR p.category LIKE CONCAT('%', :category, '%')) " +
