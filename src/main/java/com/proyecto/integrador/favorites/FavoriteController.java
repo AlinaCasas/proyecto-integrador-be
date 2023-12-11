@@ -20,8 +20,8 @@ public class FavoriteController {
     // Endpoint para agregar un instrumento a favoritos
     @PostMapping("/add")
     public ResponseEntity<String> addFavorite(@RequestParam String userEmail, @RequestParam Long productId) {
-        favoriteService.addFavorite(userEmail, productId);
-        return ResponseEntity.status(HttpStatus.OK).body("Instrumento agregado a favoritos");
+        String message = favoriteService.addFavorite(userEmail, productId);
+        return ResponseEntity.status(HttpStatus.OK).body(message);
     }
 
     // Endpoint para remover un instrumento de favoritos
