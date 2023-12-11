@@ -1,15 +1,10 @@
 package com.proyecto.integrador.characteristics.dto;
 
-import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Data
 @Builder
-@Getter
-@Setter
+@AllArgsConstructor
 public class ResponseCharacteristicDTO {
     private String name;
     private String image;
