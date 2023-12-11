@@ -83,5 +83,5 @@ public class Product extends Auditable {
   private Set<UserFavoriteProduct> favoriteUsers;
 
   @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-  private Set<Characteristic> characteristics;
+  private List<Characteristic> characteristics;
 }
