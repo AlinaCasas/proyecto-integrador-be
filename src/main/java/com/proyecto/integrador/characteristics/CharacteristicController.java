@@ -35,6 +35,11 @@ public class CharacteristicController {
         return characteristicService.getCharacteristicByName(name);
     }
 
+    @GetMapping("/product/{id}")
+    public List<Characteristic> getCharacteristicsByProductId(@PathVariable(value = "id", required = true) Long id){
+        return characteristicService.getCharacteristicsByProductId(id);
+    }
+
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public Characteristic createCharacteristic(
@@ -44,9 +49,10 @@ public class CharacteristicController {
         if (image != null) {
             if (!Objects.equals(image.getContentType(), "image/jpeg") &&
                     !Objects.equals(image.getContentType(), "image/png") &&
-                    !Objects.equals(image.getContentType(), "image/webp")) {
+                    !Objects.equals(image.getContentType(), "image/webp") &&
+                    !Objects.equals(image.getContentType(), "image/svg+xml")) {
 
-                throw new BadRequestException("Only JPG, PNG and WEBP images are allowed");
+                throw new BadRequestException("Only JPG, PNG, WEBP and SVG images are allowed");
             }
 
             if (image.getSize() > 1048576) throw new BadRequestException("Maximum image size is 1MB");
@@ -63,9 +69,10 @@ public class CharacteristicController {
         if (image != null) {
             if (!Objects.equals(image.getContentType(), "image/jpeg") &&
                     !Objects.equals(image.getContentType(), "image/png") &&
-                    !Objects.equals(image.getContentType(), "image/webp")) {
+                    !Objects.equals(image.getContentType(), "image/webp") &&
+                    !Objects.equals(image.getContentType(), "image/svg+xml")) {
 
-                throw new BadRequestException("Only JPG, PNG and WEBP images are allowed");
+                throw new BadRequestException("Only JPG, PNG, WEBP and SVG images are allowed");
             }
 
             if (image.getSize() > 1048576) throw new BadRequestException("Maximum image size is 1MB");

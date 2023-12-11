@@ -1,5 +1,6 @@
 package com.proyecto.integrador.product.dto;
 
+import com.proyecto.integrador.characteristics.dto.ResponseCharacteristicDTO;
 import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,4 +24,5 @@ public class ProductDTO {
     private List<String> images;
     private Integer discount;
     private List<ProductReservationDTO> reservations;
+    private List<ResponseCharacteristicDTO> characteristics;
 }

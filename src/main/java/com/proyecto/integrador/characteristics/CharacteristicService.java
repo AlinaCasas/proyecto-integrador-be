@@ -43,6 +43,10 @@ public class CharacteristicService {
         return characteristicRepository.findByName(name).orElseThrow(() -> new EntityNotFoundException("Category not found with name: " + name));
     }
 
+    public List<Characteristic> getCharacteristicsByProductId(Long id) {
+        return characteristicRepository.findAllByProductsId(id);
+    }
+
     @PreAuthorize("hasRole('ADMIN')")
     public Characteristic createCharacteristic(CharacteristicDTO characteristicDTO, MultipartFile image) {
         Characteristic existingCharacteristic = characteristicRepository.findByName(characteristicDTO.getName()).orElse(null);

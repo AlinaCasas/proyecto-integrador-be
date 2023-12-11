@@ -6,6 +6,9 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.proyecto.integrador.category.Category;
 import com.proyecto.integrador.category.CategoryRepository;
+import com.proyecto.integrador.characteristics.Characteristic;
+import com.proyecto.integrador.characteristics.CharacteristicRepository;
+import com.proyecto.integrador.characteristics.dto.ResponseCharacteristicDTO;
 import com.proyecto.integrador.exceptions.BadRequestException;
 import com.proyecto.integrador.product.dto.ProductDTO;
 import com.proyecto.integrador.product.dto.ProductReservationDTO;
@@ -38,6 +41,9 @@ public class ProductService {
     private ReservationRepository reservationRepository;
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired
+    private CharacteristicRepository characteristicRepository;
     @Autowired
     private AmazonS3 amazonS3;
 
@@ -52,24 +58,27 @@ public class ProductService {
         Pageable pageable = PageRequest.of(page, limit);
 
         // TODO add rating filter and order by rating
-
-        Page<Product> productPage = productRepository.findAllWithFilters(
-                id,
-                name,
-                category,
-                brand,
-                model,
-                description,
-                priceMin,
-                priceMax,
-                discount,
-                startDate != null ? new Date(startDate * 1000) : null,
-                endDate != null ? new Date(endDate * 1000) : null,
-                sort,
-                order,
-                pageable
-        );
-        return productPage.map(this::productToProductDTO);
+        try {
+            Page<Product> productPage = productRepository.findAllWithFilters(
+                    id,
+                    name,
+                    category,
+                    brand,
+                    model,
+                    description,
+                    priceMin,
+                    priceMax,
+                    discount,
+                    startDate != null ? new Date(startDate * 1000) : null,
+                    endDate != null ? new Date(endDate * 1000) : null,
+                    sort,
+                    order,
+                    pageable
+            );
+            return productPage.map(this::productToProductDTO);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public ProductDTO findProductById(Long id) {
@@ -78,7 +87,11 @@ public class ProductService {
 
         List<Reservation> reservationList = reservationRepository.findAllActiveReservationsByProductId(id);
         List<ProductReservationDTO> reservations = reservationList.stream().map(this::reservationToProductReservationDTO).toList();
-        return new ProductDTO(product.getId(), product.getName(), product.getCategory().getName(), product.getBrand(), product.getModel(), product.getDescription(), product.getPrice(), product.getRating(), product.getRatingCount(), product.getImages(), product.getDiscount(), reservations);
+
+        List<Characteristic> characteristicsList = characteristicRepository.findAllByProductsId(id);
+        List<ResponseCharacteristicDTO> characteristics = characteristicsList.stream().map(this::characteristicToCharacteristicDTO).toList();
+
+        return new ProductDTO(product.getId(), product.getName(), product.getCategory().getName(), product.getBrand(), product.getModel(), product.getDescription(), product.getPrice(), product.getRating(), product.getRatingCount(), product.getImages(), product.getDiscount(), reservations, characteristics);
     }
 
 
@@ -180,6 +193,13 @@ public class ProductService {
                 .id(reservation.getId())
                 .startDate(reservation.getStartDate().getTime())
                 .endDate(reservation.getEndDate().getTime())
+                .build();
+    }
+
+    private ResponseCharacteristicDTO characteristicToCharacteristicDTO(Characteristic characteristic) {
+        return ResponseCharacteristicDTO.builder()
+                .name(characteristic.getName())
+                .image(characteristic.getImage())
                 .build();
     }
 

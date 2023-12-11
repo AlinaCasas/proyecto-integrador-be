@@ -82,7 +82,6 @@ public class Product extends Auditable {
   @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private Set<UserFavoriteProduct> favoriteUsers;
 
-  @ManyToOne(fetch = FetchType.LAZY, optional = true)
-  @JoinColumn(name = "characteristic", nullable = true, referencedColumnName = "name")
-  private Characteristic characteristic;
+  @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+  private Set<Characteristic> characteristics;
 }
