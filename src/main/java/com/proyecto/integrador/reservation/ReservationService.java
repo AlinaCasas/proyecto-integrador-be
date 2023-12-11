@@ -1,8 +1,12 @@
 package com.proyecto.integrador.reservation;
 
+import com.proyecto.integrador.characteristics.Characteristic;
+import com.proyecto.integrador.characteristics.dto.ResponseCharacteristicDTO;
 import com.proyecto.integrador.exceptions.BadRequestException;
 import com.proyecto.integrador.product.Product;
 import com.proyecto.integrador.product.ProductRepository;
+import com.proyecto.integrador.product.dto.ProductDTO;
+import com.proyecto.integrador.product.dto.ProductReservationDTO;
 import com.proyecto.integrador.reservation.dto.CreateReservationDTO;
 import com.proyecto.integrador.reservation.dto.ResponseReservationDTO;
 import com.proyecto.integrador.reservation.dto.UpdateReservationDTO;
@@ -25,21 +29,57 @@ public class ReservationService {
     @Autowired
     private ProductRepository productRepository;
 
+    private ResponseCharacteristicDTO characteristicToResponseCharacteristicDTO(Characteristic characteristic) {
+        return ResponseCharacteristicDTO.builder()
+                .name(characteristic.getName())
+                .image(characteristic.getImage())
+                .build();
+    }
+
+    private ProductReservationDTO reservationToProductReservationDTO (Reservation reservation) {
+        return ProductReservationDTO.builder()
+                .id(reservation.getId())
+                .startDate(reservation.getStartDate().getTime())
+                .endDate(reservation.getEndDate().getTime())
+                .build();
+    }
+
     private ResponseReservationDTO reservationToReservationDTO(Reservation reservation) {
+
+        List<ResponseCharacteristicDTO> responseCharacteristicList = reservation.getProduct().getCharacteristics().stream().map(this::characteristicToResponseCharacteristicDTO).toList();
+
+        ProductDTO product = new ProductDTO(
+                reservation.getProduct().getId(),
+                reservation.getProduct().getName(),
+                reservation.getProduct().getCategory().getName(),
+                reservation.getProduct().getBrand(),
+                reservation.getProduct().getModel(),
+                reservation.getProduct().getDescription(),
+                reservation.getProduct().getPrice(),
+                reservation.getProduct().getRating(),
+                reservation.getProduct().getRatingCount(),
+                reservation.getProduct().getImages(),
+                reservation.getProduct().getDiscount(),
+                null,
+                responseCharacteristicList,
+                reservation.getProduct().getPolicies()
+        );
+
         return ResponseReservationDTO.builder()
                 .id(reservation.getId())
                 .userId(reservation.getUser().getId())
-                .productId(reservation.getProduct().getId())
                 .productPrice(reservation.getProductPrice())
                 .totalPrice(reservation.getTotalPrice())
                 .startDate(reservation.getStartDate())
                 .endDate(reservation.getEndDate())
                 .createdAt(reservation.getCreatedAt())
                 .updatedAt(reservation.getUpdatedAt())
+                .product(product)
                 .build();
     }
     public List<ResponseReservationDTO> findReservations(User user) {
         List<Reservation> reservationList = reservationRepository.findAllReservationsByUserId(user.getId());
+
         return reservationList.stream().map(this::reservationToReservationDTO).toList();
     }
 
