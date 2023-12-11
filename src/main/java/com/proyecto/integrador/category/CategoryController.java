@@ -19,7 +19,7 @@ public class CategoryController {
         return categoryService.getAllCategories();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{name}")
     public Category getCategoryById(@PathVariable(value = "name", required = true) String name) {
         return categoryService.getCategoryByName(name);
     }
