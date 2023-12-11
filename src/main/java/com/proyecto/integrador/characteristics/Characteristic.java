@@ -33,20 +33,9 @@ public class Characteristic extends Auditable {
     @Column(name = "name", nullable = false, unique = true)
     private String name;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "deleted_at")
-    private Date deletedAt;
-
-
     @Column(name = "image", nullable = true)
     private String image;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)
-    @JoinColumn(name = "category", nullable = true, referencedColumnName = "name")
-    private Category category;
-
-    @OneToMany(mappedBy = "characteristic", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "characteristics", fetch = FetchType.LAZY)
     private Set<Product> products;
-
-
 }

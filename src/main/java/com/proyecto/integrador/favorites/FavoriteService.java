@@ -49,6 +49,7 @@ public class FavoriteService {
         }
     }
 
+    @Transactional
     public void removeFavorite(String userEmail, Long productId) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
