@@ -2,6 +2,7 @@ package com.proyecto.integrador.product;
 
 import com.proyecto.integrador.category.Category;
 import com.proyecto.integrador.exceptions.BadRequestException;
+import com.proyecto.integrador.product.dto.CreateProductDTO;
 import com.proyecto.integrador.product.dto.ProductDTO;
 import com.proyecto.integrador.product.dto.UpdateProductDTO;
 import jakarta.persistence.EntityNotFoundException;
@@ -69,10 +70,8 @@ public class ProductController {
     public ResponseEntity<?> create(
             @RequestParam(value = "categoryName", required = true) String categoryName,
             @RequestParam(value = "imagesFiles", required = false) MultipartFile[] imagesFiles,
-            @Valid @ModelAttribute Product product
+            @Valid @ModelAttribute CreateProductDTO product
     ) {
-        Category foundCategory = categoryRepository.findByName(categoryName).orElseThrow(() -> new BadRequestException("Category not found with name: "  + categoryName));
-        product.setCategory(foundCategory);
 
         if (imagesFiles != null) {
             HashMap<String, String> imagesError = validateImages(imagesFiles);

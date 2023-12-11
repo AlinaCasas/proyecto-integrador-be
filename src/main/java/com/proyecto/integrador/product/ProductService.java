@@ -10,6 +10,7 @@ import com.proyecto.integrador.characteristics.Characteristic;
 import com.proyecto.integrador.characteristics.CharacteristicRepository;
 import com.proyecto.integrador.characteristics.dto.ResponseCharacteristicDTO;
 import com.proyecto.integrador.exceptions.BadRequestException;
+import com.proyecto.integrador.product.dto.CreateProductDTO;
 import com.proyecto.integrador.product.dto.ProductDTO;
 import com.proyecto.integrador.product.dto.ProductReservationDTO;
 import com.proyecto.integrador.product.dto.UpdateProductDTO;
@@ -96,13 +97,41 @@ public class ProductService {
 
 
 
-    public ProductDTO createProduct(Product product, MultipartFile[] imagesFiles) {
+    public ProductDTO createProduct(CreateProductDTO product, MultipartFile[] imagesFiles) {
+        if (product.getPrice() == null || product.getPrice() < 0) throw new BadRequestException("Price is required");
+
         if (product.getImages() != null && product.getImages().size() + imagesFiles.length > 7) {
             throw new BadRequestException("Product can't have more than 7 images");
         }
 
+        Category foundCategory = categoryRepository.findByName(product.getCategoryName()).orElseThrow(() -> new BadRequestException("Category not found with name: " + product.getCategoryName()));
+
+        ArrayList<Characteristic> foundCharacteristics = new ArrayList<Characteristic>();
+
+        if (product.getCharacteristics() != null && !product.getCharacteristics().isEmpty()) {
+            product.getCharacteristics().forEach(characteristic -> {
+                Characteristic foundCharacteristic = characteristicRepository.findByName(characteristic).orElseThrow(() -> new BadRequestException("Characteristic not found with name: " + characteristic));
+                foundCharacteristics.add(foundCharacteristic);
+            });
+        }
+
         product.setDiscount(Optional.ofNullable(product.getDiscount()).orElse(0));
-        Product savedProduct = trySaveProduct(product);
+
+        Product newProduct = Product.builder()
+                .name(product.getName())
+                .category(foundCategory)
+                .brand(product.getBrand())
+                .model(product.getModel())
+                .description(product.getDescription())
+                .price(product.getPrice())
+                .rating(0f)
+                .ratingCount(0)
+                .images(product.getImages())
+                .discount(product.getDiscount())
+                .characteristics(foundCharacteristics)
+                .build();
+
+        Product savedProduct = trySaveProduct(newProduct);
 
         if (imagesFiles != null && imagesFiles.length > 0) {
             List<String> imageUrls = uploadImages(imagesFiles, savedProduct.getId().toString());
@@ -124,8 +153,9 @@ public class ProductService {
         Float price = updateProductDTO.getPrice();
         List<String> images = updateProductDTO.getImages();
         Integer discount = updateProductDTO.getDiscount();
+        List<String> characteristics = updateProductDTO.getCharacteristics();
 
-        if (name == null && category == null && brand == null && model == null && description == null && price == null && images == null && discount == null && imagesFiles == null) throw new BadRequestException("No data to update");
+        if (name == null && category == null && brand == null && model == null && description == null && price == null && images == null && discount == null && imagesFiles == null && characteristics == null) throw new BadRequestException("No data to update");
 
         Product product = productRepository.findById(id).orElseThrow(() -> new BadRequestException("Product not found"));
 
@@ -141,6 +171,14 @@ public class ProductService {
             Category foundCategory = categoryRepository.findByName(categoryName).orElseThrow(() -> new BadRequestException("Category not found with name: " + categoryName));
 
             product.setCategory(foundCategory);
+        }
+        if (characteristics != null && !characteristics.isEmpty()) {
+            List<Characteristic> foundCharacteristics = new ArrayList<Characteristic>();
+            characteristics.forEach(characteristic -> {
+                Characteristic foundCharacteristic = characteristicRepository.findByName(characteristic).orElseThrow(() -> new BadRequestException("Characteristic not found with name: " + characteristic));
+                foundCharacteristics.add(foundCharacteristic);
+            });
+            product.setCharacteristics(foundCharacteristics);
         }
         if (brand != null) product.setBrand(updateProductDTO.getBrand());
         if (model != null) product.setModel(updateProductDTO.getModel());
@@ -179,7 +217,9 @@ public class ProductService {
         }
 
         List<ProductReservationDTO> reservations = saveProduct.getReservations().stream().map(this::reservationToProductReservationDTO).toList();
-        return new ProductDTO(saveProduct.getId(), saveProduct.getName(), saveProduct.getCategory().getName(), saveProduct.getBrand(), saveProduct.getModel(), saveProduct.getDescription(), saveProduct.getPrice(), saveProduct.getRating(), saveProduct.getRatingCount(), saveProduct.getImages(), saveProduct.getDiscount(), reservations, null);
+        List<ResponseCharacteristicDTO> responseCharacteristics = saveProduct.getCharacteristics().stream().map(this::characteristicToCharacteristicDTO).toList();
+
+        return new ProductDTO(saveProduct.getId(), saveProduct.getName(), saveProduct.getCategory().getName(), saveProduct.getBrand(), saveProduct.getModel(), saveProduct.getDescription(), saveProduct.getPrice(), saveProduct.getRating(), saveProduct.getRatingCount(), saveProduct.getImages(), saveProduct.getDiscount(), reservations, responseCharacteristics);
     }
 
     public void deleteProduct(Long id){
@@ -205,8 +245,12 @@ public class ProductService {
 
     private ProductDTO productToProductDTO(Product product) {
         List<ProductReservationDTO> reservations = new ArrayList<>();
+        List<ResponseCharacteristicDTO> characteristics = new ArrayList<>();
         if (product.getReservations() != null && !product.getReservations().isEmpty()) {
             reservations = product.getReservations().stream().map(this::reservationToProductReservationDTO).toList();
+        }
+        if (product.getCharacteristics() != null && !product.getCharacteristics().isEmpty()) {
+            characteristics = product.getCharacteristics().stream().map(this::characteristicToCharacteristicDTO).toList();
         }
 
         return ProductDTO.builder()
@@ -222,6 +266,7 @@ public class ProductService {
                 .images(product.getImages())
                 .discount(product.getDiscount())
                 .reservations(reservations)
+                .characteristics(characteristics)
                 .build();
     }
 
