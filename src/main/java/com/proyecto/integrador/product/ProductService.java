@@ -179,7 +179,7 @@ public class ProductService {
         }
 
         List<ProductReservationDTO> reservations = saveProduct.getReservations().stream().map(this::reservationToProductReservationDTO).toList();
-        return new ProductDTO(saveProduct.getId(), saveProduct.getName(), saveProduct.getCategory().getName(), saveProduct.getBrand(), saveProduct.getModel(), saveProduct.getDescription(), saveProduct.getPrice(), saveProduct.getRating(), saveProduct.getRatingCount(), saveProduct.getImages(), saveProduct.getDiscount(), reservations);
+        return new ProductDTO(saveProduct.getId(), saveProduct.getName(), saveProduct.getCategory().getName(), saveProduct.getBrand(), saveProduct.getModel(), saveProduct.getDescription(), saveProduct.getPrice(), saveProduct.getRating(), saveProduct.getRatingCount(), saveProduct.getImages(), saveProduct.getDiscount(), reservations, null);
     }
 
     public void deleteProduct(Long id){
